@@ -76,6 +76,10 @@ impl VideoDecoder {
         receive_and_process_decoded_frames(&mut decoder)?;
         Ok(())
     }
+
+    pub fn get_frame(&mut self) -> Video {
+        todo!();
+    }
     /*
     pub fn new(path: PathBuf) -> Result<Self, video_rs::Error> {
         let file = Location::File(path);
