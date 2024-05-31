@@ -11,6 +11,13 @@ pub struct VideoDecoder {
 }
 
 impl VideoDecoder {
+    pub fn new(path: &str) -> Result<Self, ffmpeg_next::Error> {
+        let out_buffer = Arc::new(Mutex::new(VecDeque::new()));
+
+        Ok(Self {
+            out_buffer,
+        })
+    }
     /*
     pub fn new(path: PathBuf) -> Result<Self, video_rs::Error> {
         let file = Location::File(path);
