@@ -45,7 +45,7 @@ impl VideoDecoder {
             Flags::BILINEAR,
         )?;
 
-        // TODO: dedicated thread for this
+        // TODO: dedicated thread for this and sending
         let mut receive_and_process_decoded_frames = 
             |decoder: &mut ffmpeg_next::decoder::Video| -> Result<(), ffmpeg_next::Error> {
                 let mut decoded = Video::empty();
@@ -53,14 +53,12 @@ impl VideoDecoder {
                 while decoder.receive_frame(&mut decoded).is_ok() {
                     let mut rgb_frame = Video::empty();
                     scaler.run(&decoded, &mut rgb_frame)?;
-                    // TODO: Enqueue decoded frame somewhere
-                    //       or combine this with video player to immediatly display the frames
+                    // TODO: Send decoded frames with sync_channel
                 }
 
                 Ok(())
             };
         
-        // TODO: dedicated thread for this as well
         for (stream, packet) in video_file.packets() {
             if stream.index() == video_stream_index {
                 decoder.send_packet(&packet)?;
