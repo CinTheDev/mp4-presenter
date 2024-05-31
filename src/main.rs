@@ -20,6 +20,9 @@ fn main() {
 
     let path = PathBuf::from("vid/OpeningManim.mp4");
     let mut decoder = VideoDecoder::new(path).expect("Failed to read video file");
+
+    let (width, height) = decoder.get_dimensions();
+
     decoder.start_decoding();
 
     let mut frame_index = 0;
@@ -30,8 +33,8 @@ fn main() {
         let frame_buffer = decoder.get_frame();
 
         let image_buffer = ImageBuffer {
-            width: todo!(),
-            height: todo!(),
+            width,
+            height,
             buffer: frame_buffer,
         };
 

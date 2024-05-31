@@ -24,6 +24,11 @@ impl VideoDecoder {
         })
     }
 
+    pub fn get_dimensions(&self) -> (usize, usize) {
+        let (width, height) = self.decoder.size_out();
+        return (width as usize, height as usize);
+    }
+
     pub fn start_decoding(&mut self) {
         unimplemented!();
     }
