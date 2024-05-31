@@ -6,7 +6,7 @@ use ffmpeg_next::media::Type;
 use ffmpeg_next::software::scaling::{context::Context, flag::Flags};
 use ffmpeg_next::util::frame::video::Video;
 
-const IMAGE_BUFFER_SIZE: usize = 5;
+const IMAGE_BUFFER_SIZE: usize = 1024;
 
 pub struct VideoDecoder {
     _decoder_thread: thread::JoinHandle<()>,
