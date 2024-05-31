@@ -21,16 +21,35 @@ fn main() {
     video_rs::init().unwrap();
 
     let file = Location::File(PathBuf::from("vid/OpeningManim.mp4"));
-    let mut decoder = Decoder::new(file).expect("Failed to create decoder");
+    let decoder_reader = Decoder::new(file).expect("Failed to create decoder");
 
     //let mut frame_index = 0;
     let mut time_start = Instant::now();
 
+    let (mut decoder, mut reader, stream_index) = decoder_reader.into_parts();
+
+    // TODO: Decode whole video
+    for _ in 0..30 {
+        // Read
+        let packet = reader.read(stream_index).unwrap();
+
+        // Decode (fps drop expected - it means it's actually doing work)
+        let _ = decoder.decode(packet).expect("Decode error");
+
+        // FPS measuring
+        let duration = time_start.elapsed();
+        let fps = 1.0 / duration.as_secs_f32();
+        print_fps(fps);
+
+        time_start = Instant::now();
+    }
+
+    /*
     decoder
         .decode_raw_iter()
         .take_while(Result::is_ok)
         .map(Result::unwrap)
-        .for_each(|_| {
+        .for_each(|frame| {
 
         //let rgb = frame.slice(ndarray::s![.., .., ..]).to_slice().unwrap();
         //let (height, width, _) = frame.dim();
@@ -50,6 +69,7 @@ fn main() {
 
         time_start = Instant::now();
     });
+    */
 }
 
 fn print_fps(fps: f32) {
