@@ -44,10 +44,31 @@ fn main() {
 
         let duration = time_start.elapsed();
         let fps = 1.0 / duration.as_secs_f32();
-        println!("FPS: {}", fps);
-        
+        print_fps(fps);
+
         time_start = Instant::now();
     });
+}
+
+fn print_fps(fps: f32) {
+    let fps_status;
+    if fps < 10.0 {
+        fps_status = "Friggin terrible";
+    }
+    else if fps < 30.0 {
+        fps_status = "Garbage performance";
+    }
+    else if fps < 60.0 {
+        fps_status = "Not good enough";
+    }
+    else if fps < 120.0 {
+        fps_status = "Could be better";
+    }
+    else {
+        fps_status = "Pretty good";
+    }
+
+    println!("FPS STATUS: {} ({:.2} fps)", fps_status, fps);
 }
 
 fn write_image_buffer(image_buffer: ImageBuffer, index: usize) -> std::io::Result<()> {
