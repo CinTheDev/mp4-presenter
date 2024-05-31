@@ -21,24 +21,24 @@ fn main() {
 
     let mut frame_index = 0;
 
-    for frame in decoder.decode_iter() {
-        if let Ok((_, frame)) = frame {
-            let rgb = frame.slice(ndarray::s![.., .., ..]).to_slice().unwrap();
-            let (height, width, _) = frame.dim();
+    decoder
+        .decode_iter()
+        .take_while(Result::is_ok)
+        .map(Result::unwrap)
+        .for_each(|(_, frame)| {
 
-            let image_buffer = ImageBuffer {
-                width,
-                height,
-                buffer: rgb,
-            };
+        let rgb = frame.slice(ndarray::s![.., .., ..]).to_slice().unwrap();
+        let (height, width, _) = frame.dim();
 
-            write_image_buffer(image_buffer, frame_index).unwrap();
-            frame_index += 1;
-        }
-        else {
-            break;
-        }
-    }
+        let image_buffer = ImageBuffer {
+            width,
+            height,
+            buffer: rgb,
+        };
+
+        write_image_buffer(image_buffer, frame_index).unwrap();
+        frame_index += 1;
+    });
 }
 
 fn write_image_buffer(image_buffer: ImageBuffer, index: usize) -> std::io::Result<()> {
