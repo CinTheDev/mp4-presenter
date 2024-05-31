@@ -1,5 +1,4 @@
-use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{self, SyncSender};
 use std::thread;
 
 use ffmpeg_next::format::{input, Pixel};
@@ -7,23 +6,29 @@ use ffmpeg_next::media::Type;
 use ffmpeg_next::software::scaling::{context::Context, flag::Flags};
 use ffmpeg_next::util::frame::video::Video;
 
+const IMAGE_BUFFER_SIZE: usize = 5;
+
 pub struct VideoDecoder {
     decoder_thread: thread::JoinHandle<()>,
+    decoder_rx: mpsc::Receiver<Video>,
 }
 
 impl VideoDecoder {
     pub fn new(path: &str) -> Result<Self, ffmpeg_next::Error> {
+        let (tx, rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
+
         let path = path.to_owned();
         let decoder_thread = thread::spawn(move || {
-            VideoDecoder::start_decoding(&path).unwrap();
+            VideoDecoder::start_decoding(&path, tx).unwrap();
         });
 
         Ok(Self {
             decoder_thread,
+            decoder_rx: rx,
         })
     }
 
-    fn start_decoding(path: &str) -> Result<(), ffmpeg_next::Error> {
+    fn start_decoding(path: &str, tx: SyncSender<Video>) -> Result<(), ffmpeg_next::Error> {
         let mut video_file = input(path)?;
         let input = video_file
             .streams()
@@ -51,7 +56,7 @@ impl VideoDecoder {
                 while decoder.receive_frame(&mut decoded).is_ok() {
                     let mut rgb_frame = Video::empty();
                     scaler.run(&decoded, &mut rgb_frame)?;
-                    // TODO: Send decoded frames with sync_channel
+                    tx.send(rgb_frame).unwrap();
                 }
 
                 Ok(())
