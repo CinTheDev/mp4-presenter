@@ -9,10 +9,10 @@ use ansi_term::Colour;
 mod video_decoder;
 use video_decoder::VideoDecoder;
 
-struct ImageBuffer<'a> {
+struct ImageBuffer {
     width: usize,
     height: usize,
-    buffer: &'a [u8],
+    buffer: Box<[u8]>,
 }
 
 fn main() {
