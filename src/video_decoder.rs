@@ -1,4 +1,4 @@
-use std::sync::mpsc::{self, SyncSender};
+use std::sync::mpsc;
 use std::thread;
 
 use ffmpeg_next::format::{input, Pixel};
@@ -28,7 +28,7 @@ impl VideoDecoder {
         })
     }
 
-    fn start_decoding(path: &str, tx: SyncSender<Video>) -> Result<(), ffmpeg_next::Error> {
+    fn start_decoding(path: &str, tx: mpsc::SyncSender<Video>) -> Result<(), ffmpeg_next::Error> {
         let mut video_file = input(path)?;
         let input = video_file
             .streams()
