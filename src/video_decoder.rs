@@ -1,4 +1,6 @@
+use std::collections::VecDeque;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use video_rs::{decode::DecoderSplit, Reader};
 use video_rs::location::Location;
@@ -8,6 +10,8 @@ pub struct VideoDecoder {
     decoder: DecoderSplit,
     reader: Reader,
     stream_index: usize,
+
+    out_buffer: Arc<VecDeque<Box<[u8]>>>
 }
 
 impl VideoDecoder {
@@ -17,10 +21,13 @@ impl VideoDecoder {
 
         let (decoder, reader, stream_index) = decoder_reader.into_parts();
 
+        let out_buffer = Arc::new(VecDeque::new());
+
         Ok(Self {
             decoder,
             reader,
             stream_index,
+            out_buffer,
         })
     }
 
@@ -33,7 +40,13 @@ impl VideoDecoder {
         unimplemented!();
     }
 
-    pub fn get_frame(&mut self) -> &[u8] {
-        unimplemented!();
+    pub fn get_frame(&mut self) -> Box<[u8]> {
+        let mut frame_response = Option::None;
+
+        while frame_response.is_none() {
+            frame_response = self.out_buffer.pop_front();
+        }
+
+        frame_response.unwrap()
     }
 }
