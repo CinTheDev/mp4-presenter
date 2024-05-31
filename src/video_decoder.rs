@@ -79,7 +79,7 @@ impl VideoDecoder {
         Ok(())
     }
 
-    pub fn get_frame(&mut self) -> Video {
-        self.decoder_rx.recv().unwrap()
+    pub fn get_frame(&mut self) -> Result<Video, mpsc::RecvError> {
+        self.decoder_rx.recv()
     }
 }

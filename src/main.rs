@@ -18,10 +18,7 @@ fn main() {
     let mut frame_index = 0;
     let mut time_start = Instant::now();
 
-    // TODO: Decode whole video
-    for _ in 0..30 {
-        let image_buffer = decoder.get_frame();
-
+    while let Ok(image_buffer) = decoder.get_frame() {
         write_image_buffer(&image_buffer, frame_index).expect("Failed to write image buffer");
 
         // FPS measuring
