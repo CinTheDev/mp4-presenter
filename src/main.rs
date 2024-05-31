@@ -43,33 +43,6 @@ fn main() {
 
         time_start = Instant::now();
     }
-
-    /*
-    decoder
-        .decode_raw_iter()
-        .take_while(Result::is_ok)
-        .map(Result::unwrap)
-        .for_each(|frame| {
-
-        //let rgb = frame.slice(ndarray::s![.., .., ..]).to_slice().unwrap();
-        //let (height, width, _) = frame.dim();
-
-        //let image_buffer = ImageBuffer {
-        //    width,
-        //    height,
-        //    buffer: rgb,
-        //};
-
-        //write_image_buffer(image_buffer, frame_index).unwrap();
-        //frame_index += 1;
-
-        let duration = time_start.elapsed();
-        let fps = 1.0 / duration.as_secs_f32();
-        print_fps(fps);
-
-        time_start = Instant::now();
-    });
-    */
 }
 
 fn print_fps(fps: f32) {
