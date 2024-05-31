@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use video_rs::decode::Decoder;
 use video_rs::location::Location;
