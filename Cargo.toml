@@ -5,8 +5,3 @@ edition = "2021"
 
 [dependencies]
 ansi_term = "0.12.1"
-ndarray = "0.15.6"
-
-[dependencies.video-rs]
-version = "0.8.1"
-features = ["ndarray"]
