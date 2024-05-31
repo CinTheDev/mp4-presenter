@@ -2,9 +2,7 @@
 
 A simple program written in Rust made for mp4-based presentations.
 
-## TODOs for speed imrovement
-
-- Use multithreading for decoding
+The crate `ffmpeg-next` is used for reading the input video files.
 
 ## Helpful ressources
 
