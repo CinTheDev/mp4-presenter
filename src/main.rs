@@ -23,8 +23,8 @@ fn main() {
 
     for frame in decoder.decode_iter() {
         if let Ok((_, frame)) = frame {
-            let rgb = frame.slice(ndarray::s![0, 0, ..]).to_slice().unwrap();
-            let (width, height, _) = frame.dim();
+            let rgb = frame.slice(ndarray::s![.., .., ..]).to_slice().unwrap();
+            let (height, width, _) = frame.dim();
 
             let image_buffer = ImageBuffer {
                 width,
@@ -34,6 +34,9 @@ fn main() {
 
             write_image_buffer(image_buffer, frame_index).unwrap();
             frame_index += 1;
+        }
+        else {
+            break;
         }
     }
 }
