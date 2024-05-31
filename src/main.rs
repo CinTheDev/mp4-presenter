@@ -4,14 +4,10 @@ use std::path::PathBuf;
 
 use std::time::Instant;
 
-use video_rs::decode::Decoder;
-use video_rs::location::Location;
-
-use ndarray;
-
 use ansi_term::Colour;
 
 mod video_decoder;
+use video_decoder::VideoDecoder;
 
 struct ImageBuffer<'a> {
     width: usize,
@@ -22,21 +18,24 @@ struct ImageBuffer<'a> {
 fn main() {
     video_rs::init().unwrap();
 
-    let file = Location::File(PathBuf::from("vid/OpeningManim.mp4"));
-    let decoder_reader = Decoder::new(file).expect("Failed to create decoder");
+    let path = PathBuf::from("vid/OpeningManim.mp4");
+    let mut decoder = VideoDecoder::new(path).expect("Failed to read video file");
+    decoder.start_decoding();
 
-    //let mut frame_index = 0;
+    let mut frame_index = 0;
     let mut time_start = Instant::now();
-
-    let (mut decoder, mut reader, stream_index) = decoder_reader.into_parts();
 
     // TODO: Decode whole video
     for _ in 0..30 {
-        // Read
-        let packet = reader.read(stream_index).unwrap();
+        let frame_buffer = decoder.get_frame();
 
-        // Decode (fps drop expected - it means it's actually doing work)
-        let _ = decoder.decode(packet).expect("Decode error");
+        let image_buffer = ImageBuffer {
+            width: todo!(),
+            height: todo!(),
+            buffer: frame_buffer,
+        };
+
+        write_image_buffer(image_buffer, frame_index).expect("Failed to write image buffer");
 
         // FPS measuring
         let duration = time_start.elapsed();
@@ -44,6 +43,7 @@ fn main() {
         print_fps(fps);
 
         time_start = Instant::now();
+        frame_index += 1;
     }
 }
 
