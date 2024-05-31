@@ -23,4 +23,12 @@ impl VideoDecoder {
             stream_index,
         })
     }
+
+    fn start_decoding(&mut self) {
+        unimplemented!();
+    }
+
+    fn get_frame(&mut self) -> &[u8] {
+        unimplemented!();
+    }
 }
