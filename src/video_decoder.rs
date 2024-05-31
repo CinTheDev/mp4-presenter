@@ -38,7 +38,9 @@ impl VideoDecoder {
     }
 
     pub fn start_decoding(&mut self) {
-        unimplemented!();
+        // TODO: One thread to read stream
+        //       other (multiple threads) to decode
+        todo!();
     }
 
     pub fn get_frame(&mut self) -> Box<[u8]> {
