@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 use video_rs::{decode::DecoderSplit, Reader};
 use video_rs::location::Location;
@@ -11,7 +12,7 @@ pub struct VideoDecoder {
     reader: Reader,
     stream_index: usize,
 
-    out_buffer: Arc<VecDeque<Box<[u8]>>>
+    out_buffer: Arc<Mutex<VecDeque<Box<[u8]>>>>,
 }
 
 impl VideoDecoder {
@@ -21,7 +22,7 @@ impl VideoDecoder {
 
         let (decoder, reader, stream_index) = decoder_reader.into_parts();
 
-        let out_buffer = Arc::new(VecDeque::new());
+        let out_buffer = Arc::new(Mutex::new(VecDeque::new()));
 
         Ok(Self {
             decoder,
@@ -41,12 +42,20 @@ impl VideoDecoder {
     }
 
     pub fn get_frame(&mut self) -> Box<[u8]> {
-        let mut frame_response = Option::None;
+        loop {
+            let mut dequeue = self.out_buffer.lock().unwrap();
+            let frame_response = dequeue.pop_front();
 
-        while frame_response.is_none() {
-            frame_response = self.out_buffer.pop_front();
+            if frame_response.is_none() {
+                // Periodically release mutex lock to allow other thread to push data to the queue
+                // We never want to get to this point btw
+                drop(dequeue);
+                println!("WARNING: Output buffer empty");
+                thread::sleep(std::time::Duration::from_millis(10));
+            }
+            else {
+                return frame_response.unwrap();
+            }
         }
-
-        frame_response.unwrap()
     }
 }
