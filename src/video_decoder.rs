@@ -56,7 +56,12 @@ impl VideoDecoder {
                 while decoder.receive_frame(&mut decoded).is_ok() {
                     let mut rgb_frame = Video::empty();
                     scaler.run(&decoded, &mut rgb_frame)?;
-                    tx.send(rgb_frame).unwrap();
+                    let tx_response = tx.send(rgb_frame);
+
+                    if let Err(_) = tx_response {
+                        // Return immediatly if receiver has been dropped
+                        return Ok(());
+                    }
                 }
 
                 Ok(())
