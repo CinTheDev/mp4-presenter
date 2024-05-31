@@ -8,23 +8,22 @@ use ffmpeg_next::software::scaling::{context::Context, flag::Flags};
 use ffmpeg_next::util::frame::video::Video;
 
 pub struct VideoDecoder {
-    // TODO
+    decoder_thread: thread::JoinHandle<()>,
 }
 
 impl VideoDecoder {
     pub fn new(path: &str) -> Result<Self, ffmpeg_next::Error> {
-        // TODO: Threading
+        let path = path.to_owned();
+        let decoder_thread = thread::spawn(move || {
+            VideoDecoder::start_decoding(&path).unwrap();
+        });
 
-        let mut s = Self {
-            // TODO
-        };
-
-        s.start_decoding(path)?;
-
-        Ok(s)
+        Ok(Self {
+            decoder_thread,
+        })
     }
 
-    fn start_decoding(&mut self, path: &str) -> Result<(), ffmpeg_next::Error> {
+    fn start_decoding(path: &str) -> Result<(), ffmpeg_next::Error> {
         let mut video_file = input(path)?;
         let input = video_file
             .streams()
@@ -45,7 +44,6 @@ impl VideoDecoder {
             Flags::BILINEAR,
         )?;
 
-        // TODO: dedicated thread for this and sending
         let mut receive_and_process_decoded_frames = 
             |decoder: &mut ffmpeg_next::decoder::Video| -> Result<(), ffmpeg_next::Error> {
                 let mut decoded = Video::empty();
