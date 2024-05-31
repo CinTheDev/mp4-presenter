@@ -3,10 +3,6 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use video_rs::{decode::DecoderSplit, Reader};
-use video_rs::location::Location;
-use video_rs::Decoder;
-
 pub struct VideoDecoder {
     decoder: DecoderSplit,
     reader: Reader,

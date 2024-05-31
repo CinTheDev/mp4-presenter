@@ -6,8 +6,8 @@ use std::time::Instant;
 
 use ansi_term::Colour;
 
-mod video_decoder;
-use video_decoder::VideoDecoder;
+//mod video_decoder;
+//use video_decoder::VideoDecoder;
 
 struct ImageBuffer {
     width: usize,
@@ -16,14 +16,14 @@ struct ImageBuffer {
 }
 
 fn main() {
-    video_rs::init().unwrap();
+    ffmpeg_next::init().unwrap();
 
-    let path = PathBuf::from("vid/OpeningManim.mp4");
-    let mut decoder = VideoDecoder::new(path).expect("Failed to read video file");
+    //let path = PathBuf::from("vid/OpeningManim.mp4");
+    //let mut decoder = VideoDecoder::new(path).expect("Failed to read video file");
 
     let (width, height) = decoder.get_dimensions();
 
-    decoder.start_decoding();
+    //decoder.start_decoding();
 
     let mut frame_index = 0;
     let mut time_start = Instant::now();
