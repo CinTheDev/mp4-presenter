@@ -1,28 +1,48 @@
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::BufReader;
+use std::path::PathBuf;
 
-struct ImageBuffer {
+use video_rs::decode::Decoder;
+use video_rs::location::Location;
+
+use ndarray;
+
+struct ImageBuffer<'a> {
     width: usize,
     height: usize,
-    buffer: Box<[u8]>,
+    buffer: &'a [u8],
 }
 
 fn main() {
-    let f = File::open("vid/OpeningManim.mp4").unwrap();
-    let size = f.metadata().unwrap().len();
-    let reader = BufReader::new(f);
+    video_rs::init().unwrap();
 
-    let mp4 = mp4::Mp4Reader::read_header(reader, size).unwrap();
+    let file = Location::File(PathBuf::from("vid/OpeningManim.mp4"));
+    let mut decoder = Decoder::new(file).expect("Failed to create decoder");
 
-    println!("Timescale: {}", mp4.moov.mvhd.timescale);
-    println!("Size: {}", mp4.size());
-    println!("Duration: {:?}", mp4.duration());
+    let mut frame_index = 0;
+
+    for frame in decoder.decode_iter() {
+        if let Ok((_, frame)) = frame {
+            let rgb = frame.slice(ndarray::s![0, 0, ..]).to_slice().unwrap();
+            let (width, height, _) = frame.dim();
+
+            let image_buffer = ImageBuffer {
+                width,
+                height,
+                buffer: rgb,
+            };
+
+            write_image_buffer(image_buffer, frame_index).unwrap();
+            frame_index += 1;
+        }
+    }
 }
 
-fn write_image_buffer(image_buffer: ImageBuffer) -> std::io::Result<()> {
-    let path = "debug.ppm";
+fn write_image_buffer(image_buffer: ImageBuffer, index: usize) -> std::io::Result<()> {
+    let path = format!("out/debug{}.ppm", index);
     let header = format!("P6\n{} {} 255\n", image_buffer.width, image_buffer.height);
+
+    println!("Debug file write: {}", path);
 
     let mut file = File::create(path)?;
 
