@@ -10,8 +10,8 @@ use ffmpeg_next::util::frame::video::Video;
 
 use ansi_term::Colour;
 
-//mod video_decoder;
-//use video_decoder::VideoDecoder;
+mod video_decoder;
+use video_decoder::VideoDecoder;
 
 /*
 struct ImageBuffer {
@@ -52,10 +52,18 @@ fn main() {
     let mut receive_and_process_decoded_frames =
         |decoder: &mut ffmpeg_next::decoder::Video| -> Result<(), ffmpeg_next::Error> {
             let mut decoded = Video::empty();
+            let mut time_start = Instant::now();
+
             while decoder.receive_frame(&mut decoded).is_ok() {
                 let mut rgb_frame = Video::empty();
                 scaler.run(&decoded, &mut rgb_frame)?;
                 write_image_buffer(&rgb_frame, frame_index).unwrap();
+                
+                let duration = time_start.elapsed();
+                let fps = 1.0 / duration.as_secs_f32();
+                print_fps(fps);
+                
+                time_start = Instant::now();
                 frame_index += 1;
             }
 
@@ -126,8 +134,6 @@ fn print_fps(fps: f32) {
 fn write_image_buffer(image_buffer: &Video, index: usize) -> std::io::Result<()> {
     let path = format!("out/debug{}.ppm", index);
     let header = format!("P6\n{} {} 255\n", image_buffer.width(), image_buffer.height());
-
-    println!("Writing frame {}", index);
 
     let mut file = File::create(path)?;
 

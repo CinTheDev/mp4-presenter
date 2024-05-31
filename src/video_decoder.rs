@@ -1,17 +1,17 @@
 use std::collections::VecDeque;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
 pub struct VideoDecoder {
-    decoder: DecoderSplit,
-    reader: Reader,
-    stream_index: usize,
+    //decoder: DecoderSplit,
+    //reader: Reader,
+    //stream_index: usize,
 
     out_buffer: Arc<Mutex<VecDeque<Box<[u8]>>>>,
 }
 
 impl VideoDecoder {
+    /*
     pub fn new(path: PathBuf) -> Result<Self, video_rs::Error> {
         let file = Location::File(path);
         let decoder_reader = Decoder::new(file)?;
@@ -56,4 +56,5 @@ impl VideoDecoder {
             }
         }
     }
+    */
 }
