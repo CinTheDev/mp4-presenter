@@ -11,6 +11,8 @@ use ndarray;
 
 use ansi_term::Colour;
 
+mod video_decoder;
+
 struct ImageBuffer<'a> {
     width: usize,
     height: usize,
