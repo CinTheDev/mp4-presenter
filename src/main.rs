@@ -9,6 +9,8 @@ use video_rs::location::Location;
 
 use ndarray;
 
+use ansi_term::Colour;
+
 struct ImageBuffer<'a> {
     width: usize,
     height: usize,
@@ -53,19 +55,19 @@ fn main() {
 fn print_fps(fps: f32) {
     let fps_status;
     if fps < 10.0 {
-        fps_status = "Friggin terrible";
+        fps_status = Colour::Red.bold().paint("Friggin terrible");
     }
     else if fps < 30.0 {
-        fps_status = "Garbage performance";
+        fps_status = Colour::Red.paint("Garbage performance");
     }
     else if fps < 60.0 {
-        fps_status = "Not good enough";
+        fps_status = Colour::Yellow.bold().paint("Not good enough");
     }
     else if fps < 120.0 {
-        fps_status = "Could be better";
+        fps_status = Colour::Yellow.paint("Could be better");
     }
     else {
-        fps_status = "Pretty good";
+        fps_status = Colour::Green.paint("Pretty good");
     }
 
     println!("FPS STATUS: {} ({:.2} fps)", fps_status, fps);
