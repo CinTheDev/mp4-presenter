@@ -4,7 +4,6 @@ A simple program written in Rust made for mp4-based presentations.
 
 ## TODOs for speed imrovement
 
-- Implement fps measuring
 - Use multithreading for decoding
 
 ## Helpful ressources
