@@ -4,8 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ndarray = "0.15.6"
-
-[dependencies.video-rs]
-version = "0.8.1"
-features = ["ndarray"]
+ansi_term = "0.12.1"
+ffmpeg-next = "7.0.2"
