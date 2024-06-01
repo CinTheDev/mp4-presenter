@@ -1,6 +1,6 @@
 use eframe::egui;
 use ansi_term::Colour;
-use std::{sync::mpsc, time::Instant};
+use std::{sync::mpsc, time::{Duration, Instant}};
 
 use crate::video_decoder::{VideoDecoder, VideoFrame};
 
@@ -29,25 +29,31 @@ impl EguiApp {
         }
     }
 
-    fn update_texture(&mut self, ctx: &egui::Context) {
-        let delta_time = self.time_last_frame.elapsed();
+    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<VideoFrame>, ctx: &egui::Context, target_time: Duration) {
+        let mut time_last_frame = Instant::now();
 
-        if delta_time < self.target_time {
-            return;
-        }
-
-        if let Ok(frame) = self.decoder.get_frame() {
-            self.current_frame = Some(frame);
-
-            ctx.request_repaint();
-
-            // FPS measuring
-            let total_duration = self.time_last_frame.elapsed();
-
-            let fps = 1.0 / total_duration.as_secs_f32();
-            print_fps(fps);
-
-            self.time_last_frame = Instant::now();
+        loop {
+            let delta_time = time_last_frame.elapsed();
+    
+            if delta_time < target_time {
+                return;
+            }
+    
+            if let Ok(frame) = decoder.get_frame() {
+                video_tx.send(frame).unwrap();
+                ctx.request_repaint();
+    
+                // FPS measuring
+                let total_duration = time_last_frame.elapsed();
+    
+                let fps = 1.0 / total_duration.as_secs_f32();
+                print_fps(fps);
+    
+                time_last_frame = Instant::now();
+            }
+            else {
+                return;
+            }
         }
     }
 }
@@ -58,7 +64,7 @@ impl eframe::App for EguiApp {
             //ui.image(&self.image_texture);
         });
 
-        self.update_texture(ctx);
+        //self.update_texture(ctx);
     }
 }
 
