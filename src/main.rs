@@ -98,6 +98,19 @@ impl EguiApp {
 
         ctx.load_texture("Image", raw_image, egui::TextureOptions::default())
     }
+
+    fn update_texture(&mut self, ctx: &egui::Context) {
+        let frame_response = self.decoder.get_frame();
+
+        if let Ok(frame) = frame_response {
+            let img = egui::ColorImage::from_rgb(
+                [1920, 1080],
+                frame.data(0),
+            );
+
+            self.image_texture.set(img, egui::TextureOptions::default());
+        }
+    }
 }
 
 impl eframe::App for EguiApp {
@@ -106,6 +119,7 @@ impl eframe::App for EguiApp {
             ui.image(&self.image_texture);
         });
 
+        self.update_texture(ctx);
         let work_duration = self.work_time_start.elapsed();
         
         // Wait so fps becomes constant
