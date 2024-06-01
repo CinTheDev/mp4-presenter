@@ -86,7 +86,7 @@ impl VideoDecoder {
 }
 
 pub struct VideoFrame {
-    frame: Video,
+    pub frame: Video,
 }
 
 impl VideoFrame {

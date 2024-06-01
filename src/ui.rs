@@ -40,6 +40,12 @@ impl EguiApp {
         }
     }
 
+    fn draw_frame(&mut self, ui: &mut egui::Ui) {
+        if let Some(frame_wrapper) = self.current_frame.as_ref() {
+            let frame = &frame_wrapper.frame;
+        }
+    }
+
     fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<VideoFrame>, ctx: egui::Context, target_time: Duration) {
         let mut time_last_frame = Instant::now();
 
@@ -76,7 +82,7 @@ impl EguiApp {
 impl eframe::App for EguiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            //ui.image(&self.image_texture);
+            self.draw_frame(ui);
         });
 
         self.update_frame();
