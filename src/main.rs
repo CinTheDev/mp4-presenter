@@ -38,6 +38,9 @@ fn main() {
             let wait_time = total_time - duration;
             sleep(wait_time);
         }
+        else {
+            println!("BIG PROBLEM: BUFFER UNDERFLOW");
+        }
 
         frame_index += 1;
     }
