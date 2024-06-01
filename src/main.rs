@@ -13,6 +13,7 @@ mod video_decoder;
 use video_decoder::VideoDecoder;
 
 const TARGET_FPS: f32 = 60.0;
+
 use std::thread::sleep;
 
 fn main() {
@@ -66,12 +67,20 @@ fn main() {
 
 struct EguiApp {
     decoder: VideoDecoder,
+
+    total_time_start: Instant,
+    work_time_start: Instant,
+
+    target_time: std::time::Duration,
 }
 
 impl EguiApp {
     fn new(cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
         Self {
             decoder,
+            total_time_start: Instant::now(),
+            work_time_start: Instant::now(),
+            target_time: std::time::Duration::from_secs_f32(1.0 / TARGET_FPS),
         }
     }
 }
@@ -81,6 +90,26 @@ impl eframe::App for EguiApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Hi world");
         });
+
+        let work_duration = self.work_time_start.elapsed();
+        
+        // Wait so fps becomes constant
+        if work_duration < self.target_time {
+            let wait_time = self.target_time - work_duration;
+            sleep(wait_time);
+        }
+        else {
+            println!("BIG PROBLEM: BUFFER UNDERFLOW");
+        }
+        
+        // FPS measuring
+        let total_duration = self.total_time_start.elapsed();
+
+        let fps = 1.0 / total_duration.as_secs_f32();
+        print_fps(fps);
+
+        self.total_time_start = Instant::now();
+        self.work_time_start = Instant::now();
     }
 }
 
