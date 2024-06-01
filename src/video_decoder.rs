@@ -79,17 +79,18 @@ impl VideoDecoder {
         Ok(())
     }
 
-    pub fn get_frame(&mut self) -> VideoFrame {
-        VideoFrame::new(self.decoder_rx.recv())
+    pub fn get_frame(&mut self) -> Result<VideoFrame, mpsc::RecvError> {
+        let frame = self.decoder_rx.recv()?;
+        Ok(VideoFrame::new(frame))
     }
 }
 
 pub struct VideoFrame {
-    frame: Result<Video, mpsc::RecvError>,
+    frame: Video,
 }
 
 impl VideoFrame {
-    fn new(frame: Result<Video, mpsc::RecvError>) -> Self {
+    fn new(frame: Video) -> Self {
         Self {
             frame
         }

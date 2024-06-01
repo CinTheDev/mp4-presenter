@@ -48,16 +48,19 @@ impl EguiApp {
             return;
         }
 
-        self.current_frame = Some(self.decoder.get_frame());
-        ctx.request_repaint();
+        if let Ok(frame) = self.decoder.get_frame() {
+            self.current_frame = Some(frame);
 
-        // FPS measuring
-        let total_duration = self.time_last_frame.elapsed();
+            ctx.request_repaint();
 
-        let fps = 1.0 / total_duration.as_secs_f32();
-        print_fps(fps);
+            // FPS measuring
+            let total_duration = self.time_last_frame.elapsed();
 
-        self.time_last_frame = Instant::now();
+            let fps = 1.0 / total_duration.as_secs_f32();
+            print_fps(fps);
+
+            self.time_last_frame = Instant::now();
+        }
     }
 }
 
