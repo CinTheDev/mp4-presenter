@@ -11,9 +11,6 @@ pub const TARGET_FPS: f32 = 60.0;
 pub struct EguiApp {
     video_rx: mpsc::Receiver<VideoFrame>,
     current_frame: Option<VideoFrame>,
-
-    time_last_frame: Instant,
-    target_time: std::time::Duration,
 }
 
 impl EguiApp {
@@ -21,16 +18,15 @@ impl EguiApp {
         let (video_tx, video_rx) = mpsc::channel();
 
         let ctx_thread = _cc.egui_ctx.clone();
+        let target_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
 
         thread::spawn(move || {
-            Self::receive_frames(decoder, video_tx, ctx_thread, Duration::from_secs_f32(1.0 / TARGET_FPS));
+            Self::receive_frames(decoder, video_tx, ctx_thread, target_time);
         });
 
         Self {
             video_rx,
             current_frame: None,
-            time_last_frame: Instant::now(),
-            target_time: std::time::Duration::from_secs_f32(1.0 / TARGET_FPS),
         }
     }
 
