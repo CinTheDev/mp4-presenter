@@ -44,7 +44,8 @@ impl EguiApp {
     }
 
     fn draw_frame(&mut self, ui: &mut egui::Ui) {
-        
+        let sized_texture = egui::load::SizedTexture::from_handle(&self.image_texture);
+        ui.image(sized_texture);
     }
 
     fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<egui::ColorImage>, ctx: egui::Context, target_time: Duration) {
