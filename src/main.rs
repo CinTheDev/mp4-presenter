@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::prelude::*;
 
+use eframe::egui;
+
 use std::time::Instant;
 
 use ffmpeg_next::util::frame::video::Video;
@@ -15,6 +17,13 @@ use std::thread::sleep;
 
 fn main() {
     ffmpeg_next::init().unwrap();
+
+    let native_options = eframe::NativeOptions::default();
+    eframe::run_native(
+        "MP4-Presenter",
+        native_options,
+        Box::new(|cc| Box::new(EguiApp::new(cc))),
+    ).unwrap();
 
     /*
     let mut decoder = VideoDecoder::new("vid/OpeningManim.mp4").expect("Failed to init decoder");
@@ -51,6 +60,23 @@ fn main() {
         work_start = Instant::now();
     }
     */
+}
+
+#[derive(Default)]
+struct EguiApp {}
+
+impl EguiApp {
+    fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        Self::default()
+    }
+}
+
+impl eframe::App for EguiApp {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("Hi world");
+        });
+    }
 }
 
 fn print_fps(fps: f32) {
