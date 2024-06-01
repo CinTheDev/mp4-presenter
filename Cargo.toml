@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 ansi_term = "0.12.1"
+eframe = "0.27.2"
 ffmpeg-next = "7.0.2"
