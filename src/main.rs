@@ -103,7 +103,7 @@ impl EguiApp {
 impl eframe::App for EguiApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Hi world");
+            ui.image(&self.image_texture);
         });
 
         let work_duration = self.work_time_start.elapsed();
