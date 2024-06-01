@@ -45,23 +45,23 @@ fn main() {
 
 fn print_fps(fps: f32) {
     let fps_status;
-    if fps < 10.0 {
-        fps_status = Colour::Red.bold().paint("Friggin terrible");
-    }
-    else if fps < 30.0 {
-        fps_status = Colour::Red.paint("Garbage performance");
-    }
-    else if fps < 60.0 {
-        fps_status = Colour::Yellow.bold().paint("Not good enough");
-    }
-    else if fps < 120.0 {
-        fps_status = Colour::Yellow.paint("Could be better");
-    }
-    else {
+
+    let fps_deviance = (fps - TARGET_FPS).abs();
+
+    if fps_deviance < 1.0 {
         fps_status = Colour::Green.paint("Pretty good");
     }
+    else if fps_deviance < 5.0 {
+        fps_status = Colour::Yellow.paint("Not great but ok");
+    }
+    else if fps_deviance < 10.0 {
+        fps_status = Colour::Red.paint("Kinda bad");
+    }
+    else {
+        fps_status = Colour::Red.bold().paint("Absolutely not consistent");
+    }
 
-    println!("FPS STATUS: {} ({:.2} fps)", fps_status, fps);
+    println!("FPS STATUS: {} ({:.1} fps)", fps_status, fps);
 }
 
 fn write_image_buffer(image_buffer: &Video, index: usize) -> std::io::Result<()> {
