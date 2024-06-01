@@ -139,6 +139,8 @@ impl eframe::App for EguiApp {
 
         self.total_time_start = Instant::now();
         self.work_time_start = Instant::now();
+
+        ctx.request_repaint();
     }
 }
 
