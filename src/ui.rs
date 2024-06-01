@@ -54,7 +54,7 @@ impl EguiApp {
         while let Ok(frame) = decoder.get_frame() {
             let img = egui::ColorImage::from_rgb(
                 [1920, 1080],
-                frame.frame.data(0),
+                frame.data(0),
             );
             if let Err(_) = video_tx.send(img) {
                 // Return if receiver is dropped
