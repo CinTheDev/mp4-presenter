@@ -62,12 +62,15 @@ fn main() {
     */
 }
 
-#[derive(Default)]
-struct EguiApp {}
+struct EguiApp {
+    decoder: VideoDecoder,
+}
 
 impl EguiApp {
-    fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        Self::default()
+    fn new(cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
+        Self {
+            decoder,
+        }
     }
 }
 
