@@ -128,7 +128,7 @@ impl eframe::App for EguiApp {
             sleep(wait_time);
         }
         else {
-            println!("BIG PROBLEM: BUFFER UNDERFLOW");
+            println!("BIG PROBLEM: BUFFER UNDERFLOW / LAG");
         }
         
         // FPS measuring
