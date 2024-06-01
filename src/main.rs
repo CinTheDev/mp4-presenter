@@ -16,6 +16,7 @@ use std::thread::sleep;
 fn main() {
     ffmpeg_next::init().unwrap();
 
+    /*
     let mut decoder = VideoDecoder::new("vid/OpeningManim.mp4").expect("Failed to init decoder");
 
     let mut frame_index = 0;
@@ -49,6 +50,7 @@ fn main() {
         total_time_start = Instant::now();
         work_start = Instant::now();
     }
+    */
 }
 
 fn print_fps(fps: f32) {
