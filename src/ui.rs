@@ -14,10 +14,10 @@ pub struct EguiApp {
 }
 
 impl EguiApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
         let (video_tx, video_rx) = mpsc::channel();
 
-        let ctx_thread = _cc.egui_ctx.clone();
+        let ctx_thread = cc.egui_ctx.clone();
         let target_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
 
         thread::spawn(move || {
@@ -28,7 +28,7 @@ impl EguiApp {
             [1920, 1080],
             egui::Color32::RED,
         );
-        let image_texture = _cc.egui_ctx.load_texture("Image", default_image, egui::TextureOptions::default());
+        let image_texture = cc.egui_ctx.load_texture("Image", default_image, egui::TextureOptions::default());
 
         Self {
             video_rx,
@@ -38,7 +38,6 @@ impl EguiApp {
 
     fn update_frame(&mut self) {
         if let Ok(frame) = self.video_rx.try_recv() {
-            //self.current_frame = Some(frame);
             self.image_texture.set(frame, egui::TextureOptions::default());
         }
     }
