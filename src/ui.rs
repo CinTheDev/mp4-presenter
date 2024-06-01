@@ -19,16 +19,16 @@ impl EguiApp {
     pub fn new(cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
         let (frame_tx, frame_rx) = mpsc::channel();
-
+        
+        thread::spawn(move || {
+            Self::receive_frames(decoder, video_tx);
+        });
+        
         let ctx_thread = cc.egui_ctx.clone();
         let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
 
         thread::spawn(move || {
-            Self::receive_frames(decoder, video_tx);
-        });
-
-        thread::spawn(move || {
-            Self::receive_frames_timed(frame_tx, video_rx, target_frame_time);
+            Self::receive_frames_timed(frame_tx, video_rx, ctx_thread, target_frame_time);
         });
 
         let default_image = egui::ColorImage::new(
@@ -54,7 +54,12 @@ impl EguiApp {
         ui.image(sized_texture);
     }
 
-    fn receive_frames_timed(frame_tx: mpsc::Sender<egui::ColorImage>, video_rx: mpsc::Receiver<egui::ColorImage>, target_frame_time: Duration) {
+    fn receive_frames_timed(
+        frame_tx: mpsc::Sender<egui::ColorImage>,
+        video_rx: mpsc::Receiver<egui::ColorImage>,
+        ctx: egui::Context,
+        target_frame_time: Duration,
+    ) {
         let mut time_frame_start = Instant::now();
 
         loop {
@@ -63,6 +68,8 @@ impl EguiApp {
 
             let transmit_response = frame_tx.send(received.unwrap());
             if transmit_response.is_err() { return }
+
+            ctx.request_repaint();
 
             let work_time = time_frame_start.elapsed();
             if work_time < target_frame_time {
