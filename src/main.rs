@@ -10,6 +10,9 @@ use ansi_term::Colour;
 mod video_decoder;
 use video_decoder::VideoDecoder;
 
+const TARGET_FPS: f32 = 60.0;
+use std::thread::sleep;
+
 fn main() {
     ffmpeg_next::init().unwrap();
 
@@ -18,15 +21,24 @@ fn main() {
     let mut frame_index = 0;
     let mut time_start = Instant::now();
 
+    let total_time = std::time::Duration::from_secs_f32(1.0 / TARGET_FPS);
+
     while let Ok(image_buffer) = decoder.get_frame() {
         write_image_buffer(&image_buffer, frame_index).expect("Failed to write image buffer");
 
         // FPS measuring
         let duration = time_start.elapsed();
+        time_start = Instant::now();
+
         let fps = 1.0 / duration.as_secs_f32();
         print_fps(fps);
 
-        time_start = Instant::now();
+        // Wait so fps becomes constant
+        if duration < total_time {
+            let wait_time = total_time - duration;
+            sleep(wait_time);
+        }
+
         frame_index += 1;
     }
 }
