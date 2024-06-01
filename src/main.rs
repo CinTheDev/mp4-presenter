@@ -132,10 +132,10 @@ impl eframe::App for EguiApp {
         }
         
         // FPS measuring
-        //let total_duration = self.total_time_start.elapsed();
+        let total_duration = self.total_time_start.elapsed();
 
-        //let fps = 1.0 / total_duration.as_secs_f32();
-        //print_fps(fps);
+        let fps = 1.0 / total_duration.as_secs_f32();
+        print_fps(fps);
 
         self.total_time_start = Instant::now();
         self.work_time_start = Instant::now();
