@@ -8,6 +8,8 @@ use crate::video_decoder::VideoDecoder;
 
 pub const TARGET_FPS: f32 = 60.0;
 
+const IMAGE_BUFFER_SIZE: usize = 256;
+
 pub struct EguiApp {
     video_rx: mpsc::Receiver<egui::ColorImage>,
     image_texture: egui::TextureHandle,
@@ -15,7 +17,7 @@ pub struct EguiApp {
 
 impl EguiApp {
     pub fn new(cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
-        let (video_tx, video_rx) = mpsc::channel();
+        let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
 
         let ctx_thread = cc.egui_ctx.clone();
         let target_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
@@ -47,7 +49,7 @@ impl EguiApp {
         ui.image(sized_texture);
     }
 
-    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<egui::ColorImage>, ctx: egui::Context, target_time: Duration) {
+    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::SyncSender<egui::ColorImage>, ctx: egui::Context, target_time: Duration) {
         let mut time_last_frame = Instant::now();
 
         while let Ok(frame) = decoder.get_frame() {
