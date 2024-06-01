@@ -99,7 +99,7 @@ impl EguiApp {
         ctx.load_texture("Image", raw_image, egui::TextureOptions::default())
     }
 
-    fn update_texture(&mut self, ctx: &egui::Context) {
+    fn update_texture(&mut self) {
         let frame_response = self.decoder.get_frame();
 
         if let Ok(frame) = frame_response {
@@ -114,12 +114,12 @@ impl EguiApp {
 }
 
 impl eframe::App for EguiApp {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.image(&self.image_texture);
         });
 
-        self.update_texture(ctx);
+        self.update_texture();
         let work_duration = self.work_time_start.elapsed();
         
         // Wait so fps becomes constant
@@ -128,7 +128,7 @@ impl eframe::App for EguiApp {
             sleep(wait_time);
         }
         else {
-            println!("BIG PROBLEM: BUFFER UNDERFLOW / LAG");
+            println!("{}", Colour::Yellow.bold().paint("BIG PROBLEM: BUFFER UNDERFLOW / LAG"));
         }
         
         // FPS measuring
