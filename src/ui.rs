@@ -1,6 +1,6 @@
 use eframe::egui;
 use ansi_term::Colour;
-use std::time::Instant;
+use std::{sync::mpsc, time::Instant};
 
 use crate::video_decoder::{VideoDecoder, VideoFrame};
 
@@ -9,6 +9,7 @@ pub const TARGET_FPS: f32 = 60.0;
 pub struct EguiApp {
     decoder: VideoDecoder,
 
+    video_rx: mpsc::Receiver<VideoFrame>,
     current_frame: Option<VideoFrame>,
 
     time_last_frame: Instant,
@@ -17,8 +18,11 @@ pub struct EguiApp {
 
 impl EguiApp {
     pub fn new(_cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
+        let (video_tx, video_rx) = mpsc::channel();
+
         Self {
             decoder,
+            video_rx,
             current_frame: None,
             time_last_frame: Instant::now(),
             target_time: std::time::Duration::from_secs_f32(1.0 / TARGET_FPS),
