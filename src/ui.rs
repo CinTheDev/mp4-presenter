@@ -4,13 +4,13 @@ use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use std::thread;
 
-use crate::video_decoder::{VideoDecoder, VideoFrame};
+use crate::video_decoder::VideoDecoder;
 
 pub const TARGET_FPS: f32 = 60.0;
 
 pub struct EguiApp {
-    video_rx: mpsc::Receiver<VideoFrame>,
-    current_frame: Option<VideoFrame>,
+    video_rx: mpsc::Receiver<egui::ColorImage>,
+    image_texture: egui::TextureHandle,
 }
 
 impl EguiApp {
@@ -24,29 +24,38 @@ impl EguiApp {
             Self::receive_frames(decoder, video_tx, ctx_thread, target_time);
         });
 
+        let default_image = egui::ColorImage::new(
+            [1920, 1080],
+            egui::Color32::RED,
+        );
+        let image_texture = _cc.egui_ctx.load_texture("Image", default_image, egui::TextureOptions::default());
+
         Self {
             video_rx,
-            current_frame: None,
+            image_texture,
         }
     }
 
     fn update_frame(&mut self) {
         if let Ok(frame) = self.video_rx.try_recv() {
-            self.current_frame = Some(frame);
+            //self.current_frame = Some(frame);
+            self.image_texture.set(frame, egui::TextureOptions::default());
         }
     }
 
     fn draw_frame(&mut self, ui: &mut egui::Ui) {
-        if let Some(frame_wrapper) = self.current_frame.as_ref() {
-            let frame = &frame_wrapper.frame;
-        }
+        
     }
 
-    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<VideoFrame>, ctx: egui::Context, target_time: Duration) {
+    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<egui::ColorImage>, ctx: egui::Context, target_time: Duration) {
         let mut time_last_frame = Instant::now();
 
         while let Ok(frame) = decoder.get_frame() {
-            if let Err(_) = video_tx.send(frame) {
+            let img = egui::ColorImage::from_rgb(
+                [1920, 1080],
+                frame.frame.data(0),
+            );
+            if let Err(_) = video_tx.send(img) {
                 // Return if receiver is dropped
                 return;
             }
