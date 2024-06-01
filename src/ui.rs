@@ -13,6 +13,9 @@ const IMAGE_BUFFER_SIZE: usize = 256;
 pub struct EguiApp {
     video_rx: mpsc::Receiver<egui::ColorImage>,
     image_texture: egui::TextureHandle,
+
+    time_last_frame: Instant,
+    target_frame_time: Duration,
 }
 
 impl EguiApp {
@@ -20,10 +23,10 @@ impl EguiApp {
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
 
         let ctx_thread = cc.egui_ctx.clone();
-        let target_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
+        let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
 
         thread::spawn(move || {
-            Self::receive_frames(decoder, video_tx, ctx_thread, target_time);
+            Self::receive_frames(decoder, video_tx);
         });
 
         let default_image = egui::ColorImage::new(
@@ -35,13 +38,26 @@ impl EguiApp {
         Self {
             video_rx,
             image_texture,
+            time_last_frame: Instant::now(),
+            target_frame_time,
         }
     }
 
     fn update_frame(&mut self) {
-        if let Ok(frame) = self.video_rx.try_recv() {
-            self.image_texture.set(frame, egui::TextureOptions::default());
+        if self.time_last_frame.elapsed() < self.target_frame_time {
+            return;
         }
+
+        // FPS measuring
+        let total_duration = self.time_last_frame.elapsed();
+
+        let fps = 1.0 / total_duration.as_secs_f32();
+        print_fps(fps);
+
+        self.time_last_frame = Instant::now();
+
+        let frame = self.video_rx.recv().unwrap();
+        self.image_texture.set(frame, egui::TextureOptions::default());
     }
 
     fn draw_frame(&mut self, ui: &mut egui::Ui) {
@@ -49,9 +65,7 @@ impl EguiApp {
         ui.image(sized_texture);
     }
 
-    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::SyncSender<egui::ColorImage>, ctx: egui::Context, target_time: Duration) {
-        let mut time_last_frame = Instant::now();
-
+    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::SyncSender<egui::ColorImage>) {
         while let Ok(frame) = decoder.get_frame() {
             let img = egui::ColorImage::from_rgb(
                 [1920, 1080],
@@ -61,38 +75,19 @@ impl EguiApp {
                 // Return if receiver is dropped
                 return;
             }
-
-            ctx.request_repaint();
-
-            let work_time = time_last_frame.elapsed();
-
-            // Wait so fps is consistent
-            if work_time < target_time {
-                let wait_time = target_time - work_time;
-                thread::sleep(wait_time);
-            }
-            else {
-                println!("{}", Colour::Yellow.bold().paint("BIG PROBLEM: LAG / BUFFER UNDERFLOW"));
-            }
-
-            // FPS measuring
-            let total_duration = time_last_frame.elapsed();
-
-            let fps = 1.0 / total_duration.as_secs_f32();
-            print_fps(fps);
-
-            time_last_frame = Instant::now();
         }
     }
 }
 
 impl eframe::App for EguiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        ctx.request_repaint();
         egui::CentralPanel::default().show(ctx, |ui| {
             self.draw_frame(ui);
         });
 
         self.update_frame();
+
     }
 }
 
