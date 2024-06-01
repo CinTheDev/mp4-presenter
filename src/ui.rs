@@ -50,7 +50,7 @@ impl EguiApp {
     }
 
     fn draw_frame(&mut self, ui: &mut egui::Ui) {
-        let sized_texture = egui::load::SizedTexture::from_handle(&self.image_texture);
+        let sized_texture = egui::load::SizedTexture::new(self.image_texture.id(), ui.available_rect_before_wrap().size());
         ui.image(sized_texture);
     }
 
