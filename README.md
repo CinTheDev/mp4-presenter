@@ -4,6 +4,8 @@ A simple program written in Rust made for mp4-based presentations.
 
 The crate `ffmpeg-next` is used for reading the input video files.
 
+The video player is based on egui.
+
 ## Helpful ressources
 
 Here is a collection of useful online ressources for implementing a media player.
