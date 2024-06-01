@@ -44,16 +44,9 @@ impl EguiApp {
     }
 
     fn update_frame(&mut self) {
-        if self.time_last_frame.elapsed() < self.target_frame_time {
-            return;
+        if let Ok(frame) = self.frame_rx.try_recv() {
+            self.image_texture.set(frame, egui::TextureOptions::default());
         }
-
-        
-
-        self.time_last_frame = Instant::now();
-
-        let frame = self.video_rx.recv().unwrap();
-        self.image_texture.set(frame, egui::TextureOptions::default());
     }
 
     fn draw_frame(&mut self, ui: &mut egui::Ui) {
