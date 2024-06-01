@@ -37,28 +37,28 @@ impl EguiApp {
     fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<VideoFrame>, ctx: egui::Context, target_time: Duration) {
         let mut time_last_frame = Instant::now();
 
-        loop {
-            let delta_time = time_last_frame.elapsed();
-    
-            if delta_time < target_time {
-                return;
-            }
-    
-            if let Ok(frame) = decoder.get_frame() {
-                video_tx.send(frame).unwrap();
-                ctx.request_repaint();
-    
-                // FPS measuring
-                let total_duration = time_last_frame.elapsed();
-    
-                let fps = 1.0 / total_duration.as_secs_f32();
-                print_fps(fps);
-    
-                time_last_frame = Instant::now();
+        while let Ok(frame) = decoder.get_frame() {
+            video_tx.send(frame).unwrap(); // TODO: Return if this errors
+            ctx.request_repaint();
+
+            let work_time = time_last_frame.elapsed();
+
+            // Wait so fps is consistent
+            if work_time < target_time {
+                let wait_time = target_time - work_time;
+                thread::sleep(wait_time);
             }
             else {
-                return;
+                println!("{}", Colour::Yellow.bold().paint("BIG PROBLEM: LAG / BUFFER UNDERFLOW"));
             }
+
+            // FPS measuring
+            let total_duration = time_last_frame.elapsed();
+
+            let fps = 1.0 / total_duration.as_secs_f32();
+            print_fps(fps);
+
+            time_last_frame = Instant::now();
         }
     }
 }
