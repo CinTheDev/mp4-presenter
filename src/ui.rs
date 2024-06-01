@@ -38,7 +38,11 @@ impl EguiApp {
         let mut time_last_frame = Instant::now();
 
         while let Ok(frame) = decoder.get_frame() {
-            video_tx.send(frame).unwrap(); // TODO: Return if this errors
+            if let Err(_) = video_tx.send(frame) {
+                // Return if receiver is dropped
+                return;
+            }
+
             ctx.request_repaint();
 
             let work_time = time_last_frame.elapsed();
