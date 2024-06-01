@@ -101,13 +101,18 @@ impl EguiApp {
 
     fn update_texture(&mut self) {
         let frame_response = self.decoder.get_frame();
-
+        
+        let texture_time_start = Instant::now();
         if let Ok(frame) = frame_response {
+
+            // TODO: This operation copies the entire image into RAM which is like super slow,
+            //       make it only store the reference so no massive copying happens
             let img = egui::ColorImage::from_rgb(
                 [1920, 1080],
                 frame.data(0),
             );
-
+            
+            println!("DEBUG: Texture duration: {:?}", texture_time_start.elapsed());
             self.image_texture.set(img, egui::TextureOptions::default());
         }
     }
