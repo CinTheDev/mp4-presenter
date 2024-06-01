@@ -1,14 +1,14 @@
 use eframe::egui;
 use ansi_term::Colour;
-use std::{sync::mpsc, time::{Duration, Instant}};
+use std::sync::mpsc;
+use std::time::{Duration, Instant};
+use std::thread;
 
 use crate::video_decoder::{VideoDecoder, VideoFrame};
 
 pub const TARGET_FPS: f32 = 60.0;
 
 pub struct EguiApp {
-    decoder: VideoDecoder,
-
     video_rx: mpsc::Receiver<VideoFrame>,
     current_frame: Option<VideoFrame>,
 
@@ -20,8 +20,13 @@ impl EguiApp {
     pub fn new(_cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
         let (video_tx, video_rx) = mpsc::channel();
 
+        let ctx_thread = _cc.egui_ctx.clone();
+
+        thread::spawn(move || {
+            Self::receive_frames(decoder, video_tx, ctx_thread, Duration::from_secs_f32(1.0 / TARGET_FPS));
+        });
+
         Self {
-            decoder,
             video_rx,
             current_frame: None,
             time_last_frame: Instant::now(),
@@ -29,7 +34,7 @@ impl EguiApp {
         }
     }
 
-    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<VideoFrame>, ctx: &egui::Context, target_time: Duration) {
+    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<VideoFrame>, ctx: egui::Context, target_time: Duration) {
         let mut time_last_frame = Instant::now();
 
         loop {
