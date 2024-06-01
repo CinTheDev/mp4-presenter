@@ -19,30 +19,35 @@ fn main() {
     let mut decoder = VideoDecoder::new("vid/OpeningManim.mp4").expect("Failed to init decoder");
 
     let mut frame_index = 0;
-    let mut time_start = Instant::now();
+    let mut total_time_start = Instant::now();
+    let mut work_start = Instant::now();
 
     let total_time = std::time::Duration::from_secs_f32(1.0 / TARGET_FPS);
 
     while let Ok(image_buffer) = decoder.get_frame() {
         write_image_buffer(&image_buffer, frame_index).expect("Failed to write image buffer");
 
-        // FPS measuring
-        let duration = time_start.elapsed();
-        time_start = Instant::now();
-
-        let fps = 1.0 / duration.as_secs_f32();
-        print_fps(fps);
-
+        let work_duration = work_start.elapsed();
+        
         // Wait so fps becomes constant
-        if duration < total_time {
-            let wait_time = total_time - duration;
+        if work_duration < total_time {
+            let wait_time = total_time - work_duration;
             sleep(wait_time);
         }
         else {
             println!("BIG PROBLEM: BUFFER UNDERFLOW");
         }
+        
+        // FPS measuring
+        let total_duration = total_time_start.elapsed();
+
+        let fps = 1.0 / total_duration.as_secs_f32();
+        print_fps(fps);
 
         frame_index += 1;
+
+        total_time_start = Instant::now();
+        work_start = Instant::now();
     }
 }
 
