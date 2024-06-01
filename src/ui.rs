@@ -34,6 +34,12 @@ impl EguiApp {
         }
     }
 
+    fn update_frame(&mut self) {
+        if let Ok(frame) = self.video_rx.try_recv() {
+            self.current_frame = Some(frame);
+        }
+    }
+
     fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::Sender<VideoFrame>, ctx: egui::Context, target_time: Duration) {
         let mut time_last_frame = Instant::now();
 
@@ -73,7 +79,7 @@ impl eframe::App for EguiApp {
             //ui.image(&self.image_texture);
         });
 
-        //self.update_texture(ctx);
+        self.update_frame();
     }
 }
 
