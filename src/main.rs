@@ -1,11 +1,6 @@
-use std::fs::File;
-use std::io::prelude::*;
-
 use eframe::egui;
 
 use std::time::Instant;
-
-use ffmpeg_next::util::frame::video::Video;
 
 use ansi_term::Colour;
 
@@ -168,16 +163,4 @@ fn print_fps(fps: f32) {
     }
 
     println!("FPS STATUS: {} ({:.1} fps)", fps_status, fps);
-}
-
-fn write_image_buffer(image_buffer: &Video, index: usize) -> std::io::Result<()> {
-    let path = format!("out/debug{}.ppm", index);
-    let header = format!("P6\n{} {} 255\n", image_buffer.width(), image_buffer.height());
-
-    let mut file = File::create(path)?;
-
-    file.write(header.as_bytes())?;
-    file.write(&image_buffer.data(0))?;
-
-    Ok(())
 }
