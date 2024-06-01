@@ -5,11 +5,9 @@ use std::time::Instant;
 use ansi_term::Colour;
 
 mod video_decoder;
-use video_decoder::VideoDecoder;
+use video_decoder::{VideoDecoder, VideoFrame};
 
 const TARGET_FPS: f32 = 60.0;
-
-use std::thread::sleep;
 
 fn main() {
     ffmpeg_next::init().unwrap();
@@ -63,10 +61,12 @@ fn main() {
 struct EguiApp {
     decoder: VideoDecoder,
 
-    image_texture: egui::TextureHandle,
+    //image_texture: egui::TextureHandle,
+    current_frame: Option<VideoFrame>,
 
-    total_time_start: Instant,
-    work_time_start: Instant,
+    //total_time_start: Instant,
+    //work_time_start: Instant,
+    time_last_frame: Instant,
 
     target_time: std::time::Duration,
 }
@@ -75,9 +75,11 @@ impl EguiApp {
     fn new(cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
         Self {
             decoder,
-            image_texture: Self::instance_texture(&cc.egui_ctx),
-            total_time_start: Instant::now(),
-            work_time_start: Instant::now(),
+            //image_texture: Self::instance_texture(&cc.egui_ctx),
+            current_frame: None,
+            //total_time_start: Instant::now(),
+            //work_time_start: Instant::now(),
+            time_last_frame: Instant::now(),
             target_time: std::time::Duration::from_secs_f32(1.0 / TARGET_FPS),
         }
     }
@@ -94,53 +96,33 @@ impl EguiApp {
         ctx.load_texture("Image", raw_image, egui::TextureOptions::default())
     }
 
-    fn update_texture(&mut self) {
-        let frame_response = self.decoder.get_frame();
-        
-        let texture_time_start = Instant::now();
-        if let Ok(frame) = frame_response {
+    fn update_texture(&mut self, ctx: &egui::Context) {
+        let delta_time = self.time_last_frame.elapsed();
 
-            // TODO: This operation copies the entire image into RAM which is like super slow,
-            //       make it only store the reference so no massive copying happens
-            let img = egui::ColorImage::from_rgb(
-                [1920, 1080],
-                frame.data(0),
-            );
-            
-            println!("DEBUG: Texture duration: {:?}", texture_time_start.elapsed());
-            self.image_texture.set(img, egui::TextureOptions::default());
+        if delta_time < self.target_time {
+            return;
         }
+
+        self.current_frame = Some(self.decoder.get_frame());
+        ctx.request_repaint();
+
+        // FPS measuring
+        let total_duration = self.time_last_frame.elapsed();
+
+        let fps = 1.0 / total_duration.as_secs_f32();
+        print_fps(fps);
+
+        self.time_last_frame = Instant::now();
     }
 }
 
 impl eframe::App for EguiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.image(&self.image_texture);
+            //ui.image(&self.image_texture);
         });
 
-        self.update_texture();
-        let work_duration = self.work_time_start.elapsed();
-        
-        // Wait so fps becomes constant
-        if work_duration < self.target_time {
-            let wait_time = self.target_time - work_duration;
-            sleep(wait_time);
-        }
-        else {
-            println!("{}", Colour::Yellow.bold().paint("BIG PROBLEM: BUFFER UNDERFLOW / LAG"));
-        }
-        
-        // FPS measuring
-        let total_duration = self.total_time_start.elapsed();
-
-        let fps = 1.0 / total_duration.as_secs_f32();
-        print_fps(fps);
-
-        self.total_time_start = Instant::now();
-        self.work_time_start = Instant::now();
-
-        ctx.request_repaint();
+        self.update_texture(ctx);
     }
 }
 
