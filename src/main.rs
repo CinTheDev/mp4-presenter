@@ -68,6 +68,8 @@ fn main() {
 struct EguiApp {
     decoder: VideoDecoder,
 
+    image_texture: egui::TextureHandle,
+
     total_time_start: Instant,
     work_time_start: Instant,
 
@@ -76,8 +78,19 @@ struct EguiApp {
 
 impl EguiApp {
     fn new(cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
+        // TODO: Consistent pixel count
+        let default_raw_image: [u8; 1920 * 1080 * 3] = [0xff; 1920 * 1080 * 3];
+
+        let raw_image = egui::ColorImage::from_rgb(
+            [1920, 1080],
+            &default_raw_image,
+        );
+
+        let image_texture = cc.egui_ctx.load_texture("Image", raw_image, egui::TextureOptions::default());
+
         Self {
             decoder,
+            image_texture,
             total_time_start: Instant::now(),
             work_time_start: Instant::now(),
             target_time: std::time::Duration::from_secs_f32(1.0 / TARGET_FPS),
