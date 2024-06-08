@@ -130,25 +130,26 @@ impl EguiApp {
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
         let (frame_tx, frame_rx) = mpsc::channel();
 
+        if index >= self.animation_sources.len() {
+            return None;
+        }
+
         let source_path = self.animation_sources[index].as_str();
 
-        if let Ok(decoder) = VideoDecoder::new(source_path) {
-            let decoder_thread = thread::spawn(move || {
-                Self::receive_frames(decoder, video_tx);
-            });
-            
-            let ctx_thread = ctx.clone();
-            let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
-    
-            thread::spawn(move || {
-                Self::receive_frames_timed(frame_tx, video_rx, ctx_thread, target_frame_time);
-            });
-    
-            Some((frame_rx, decoder_thread))
-        }
-        else {
-            None
-        }
+        let decoder = VideoDecoder::new(source_path).expect("Failed to init decoder");
+
+        let decoder_thread = thread::spawn(move || {
+            Self::receive_frames(decoder, video_tx);
+        });
+        
+        let ctx_thread = ctx.clone();
+        let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
+
+        thread::spawn(move || {
+            Self::receive_frames_timed(frame_tx, video_rx, ctx_thread, target_frame_time);
+        });
+
+        Some((frame_rx, decoder_thread))
     }
 
     fn receive_frames_timed(
