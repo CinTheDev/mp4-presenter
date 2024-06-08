@@ -195,7 +195,7 @@ impl EguiApp {
 
 impl eframe::App for EguiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().frame(egui::Frame::none()).show(ctx, |ui| {
             self.draw_frame(ui);
         });
 
