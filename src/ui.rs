@@ -104,8 +104,6 @@ impl EguiApp {
     }
 
     fn reload_animation(&mut self, ctx: &egui::Context) {
-        self.halt_threads();
-
         match self.frame_rx_next {
             Some(_) => {
                 self.frame_rx = Some(self.frame_rx_next.take().unwrap());
@@ -199,14 +197,6 @@ impl EguiApp {
                 decoder.halt();
                 return;
             }
-        }
-    }
-    
-    fn halt_threads(&mut self) {
-        drop(self.frame_rx.take());
-
-        if let Some(thread) = self.decoder_thread.take() {
-            thread.join().unwrap();
         }
     }
 }
