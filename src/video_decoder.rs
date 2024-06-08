@@ -18,7 +18,11 @@ impl VideoDecoder {
 
         let path = path.to_owned();
         thread::spawn(move || {
-            VideoDecoder::start_decoding(&path, tx).unwrap();
+            if let Err(error) = VideoDecoder::start_decoding(&path, tx) {
+                if error != ffmpeg_next::Error::Exit {
+                    println!("ERROR in decoder: {}", error);
+                }
+            }
         });
 
         Ok(Self {
@@ -58,7 +62,7 @@ impl VideoDecoder {
 
                     if let Err(_) = tx_response {
                         // Return immediatly if receiver has been dropped
-                        return Ok(());
+                        return Err(ffmpeg_next::Error::Exit);
                     }
                 }
 
