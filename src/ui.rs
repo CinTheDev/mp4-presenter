@@ -95,6 +95,8 @@ impl EguiApp {
     }
 
     fn reload_animation(&mut self, ctx: &egui::Context) {
+        self.halt_threads();
+
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
         let (frame_tx, frame_rx) = mpsc::channel();
 
@@ -162,6 +164,14 @@ impl EguiApp {
                 // Return if receiver is dropped
                 return;
             }
+        }
+    }
+    
+    fn halt_threads(&mut self) {
+        drop(self.frame_rx.take());
+
+        if let Some(thread) = self.decoder_thread.take() {
+            thread.join().unwrap();
         }
     }
 }
