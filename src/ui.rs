@@ -129,7 +129,14 @@ fn get_all_files(dir: &str) -> Vec<String> {
 
     for read_entry in dir_entries {
         let entry = read_entry.expect("Cannot read animation source file");
-        let path = entry.path().to_str().unwrap().to_owned();
+        let path = entry
+            .path()
+            .canonicalize()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned();
+        
         println!("Animation source: {}", path);
         result.push(path);
     }
