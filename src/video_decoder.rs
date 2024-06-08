@@ -9,8 +9,7 @@ use ffmpeg_next::util::frame::video::Video;
 const IMAGE_BUFFER_SIZE: usize = 1024;
 
 pub struct VideoDecoder {
-    _decoder_thread: thread::JoinHandle<()>,
-    decoder_rx: mpsc::Receiver<Video>,
+    decoder_rx: Option<mpsc::Receiver<Video>>,
 }
 
 impl VideoDecoder {
@@ -18,13 +17,16 @@ impl VideoDecoder {
         let (tx, rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
 
         let path = path.to_owned();
-        let _decoder_thread = thread::spawn(move || {
-            VideoDecoder::start_decoding(&path, tx).unwrap();
+        thread::spawn(move || {
+            if let Err(error) = VideoDecoder::start_decoding(&path, tx) {
+                if error != ffmpeg_next::Error::Exit {
+                    println!("ERROR in decoder: {}", error);
+                }
+            }
         });
 
         Ok(Self {
-            _decoder_thread,
-            decoder_rx: rx,
+            decoder_rx: Some(rx),
         })
     }
 
@@ -60,7 +62,7 @@ impl VideoDecoder {
 
                     if let Err(_) = tx_response {
                         // Return immediatly if receiver has been dropped
-                        return Ok(());
+                        return Err(ffmpeg_next::Error::Exit);
                     }
                 }
 
@@ -80,6 +82,6 @@ impl VideoDecoder {
     }
 
     pub fn get_frame(&mut self) -> Result<Video, mpsc::RecvError> {
-        self.decoder_rx.recv()
+        self.decoder_rx.as_ref().unwrap().recv()
     }
 }
