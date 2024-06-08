@@ -220,7 +220,7 @@ fn print_fps(fps: f32) {
     let fps_deviance = (fps - TARGET_FPS).abs();
 
     if fps_deviance < 1.0 {
-        fps_status = Colour::Green.paint("Pretty good");
+        return;
     }
     else if fps_deviance < 5.0 {
         fps_status = Colour::Yellow.paint("Not great but ok");
@@ -232,5 +232,5 @@ fn print_fps(fps: f32) {
         fps_status = Colour::Red.bold().paint("Absolutely not consistent");
     }
 
-    println!("FPS STATUS: {} ({:.1} fps)", fps_status, fps);
+    println!("FPS DEVIANCE: {} ({:.1} fps)", fps_status, fps);
 }
