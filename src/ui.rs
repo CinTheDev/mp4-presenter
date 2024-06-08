@@ -27,7 +27,7 @@ pub struct EguiApp {
 impl EguiApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let default_image = egui::ColorImage::new(
-            [1920, 1080],
+            [1, 1],
             egui::Color32::RED,
         );
         let image_texture = cc.egui_ctx.load_texture("Image", default_image, egui::TextureOptions::default());
@@ -189,7 +189,7 @@ impl EguiApp {
     fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::SyncSender<egui::ColorImage>) {
         while let Ok(frame) = decoder.get_frame() {
             let img = egui::ColorImage::from_rgb(
-                [1920, 1080],
+                [frame.width() as usize, frame.height() as usize],
                 frame.data(0),
             );
             if let Err(_) = video_tx.send(img) {
