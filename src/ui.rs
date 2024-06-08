@@ -15,6 +15,8 @@ pub struct EguiApp {
     frame_rx: Option<mpsc::Receiver<egui::ColorImage>>,
     image_texture: egui::TextureHandle,
 
+    decoder_thread: Option<thread::JoinHandle<()>>,
+
     animation_sources: Vec<String>,
     animation_index: usize,
 }
@@ -32,6 +34,7 @@ impl EguiApp {
         Self {
             frame_rx: None,
             image_texture,
+            decoder_thread: None,
             animation_sources,
             animation_index: 0,
         }
@@ -98,7 +101,7 @@ impl EguiApp {
         let source_path = self.animation_sources[self.animation_index].as_str();
         let decoder = VideoDecoder::new(source_path).expect("Failed to init decoder");
         
-        thread::spawn(move || {
+        let decoder_thread = thread::spawn(move || {
             Self::receive_frames(decoder, video_tx);
         });
         
@@ -110,6 +113,7 @@ impl EguiApp {
         });
 
         self.frame_rx = Some(frame_rx);
+        self.decoder_thread = Some(decoder_thread);
     }
 
     fn receive_frames_timed(
