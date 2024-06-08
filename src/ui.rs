@@ -71,6 +71,9 @@ impl EguiApp {
         // If index is already 0 and 1 is subtracted, it will be the greatest integer,
         // in which case this check will fail regardless, so no casting required
         if self.animation_index.overflowing_sub(1).0 < self.animation_sources.len() {
+            self.frame_rx_next.take();
+            self.decoder_thread_next.take();
+
             self.animation_index -= 1;
             self.reload_animation(ctx);
         }
