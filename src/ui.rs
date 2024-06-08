@@ -126,7 +126,7 @@ impl EguiApp {
         -> Option<(mpsc::Receiver<egui::ColorImage>, thread::JoinHandle<()>)>
     {
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
-        let (frame_tx, frame_rx) = mpsc::channel();
+        let (frame_tx, frame_rx) = mpsc::sync_channel(0);
 
         if index >= self.animation_sources.len() {
             return None;
@@ -151,7 +151,7 @@ impl EguiApp {
     }
 
     fn receive_frames_timed(
-        frame_tx: mpsc::Sender<egui::ColorImage>,
+        frame_tx: mpsc::SyncSender<egui::ColorImage>,
         video_rx: mpsc::Receiver<egui::ColorImage>,
         ctx: egui::Context,
         target_frame_time: Duration,
