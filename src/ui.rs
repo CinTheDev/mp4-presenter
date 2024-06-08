@@ -3,6 +3,7 @@ use ansi_term::Colour;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use std::thread;
+use std::vec::Vec;
 
 use crate::video_decoder::VideoDecoder;
 
@@ -14,7 +15,7 @@ pub struct EguiApp {
     frame_rx: mpsc::Receiver<egui::ColorImage>,
     image_texture: egui::TextureHandle,
 
-    animation_source: std::fs::ReadDir,
+    animation_sources: Vec<String>,
 }
 
 impl EguiApp {
@@ -39,12 +40,12 @@ impl EguiApp {
         );
         let image_texture = cc.egui_ctx.load_texture("Image", default_image, egui::TextureOptions::default());
 
-        let animation_source = std::fs::read_dir("vid").expect("Failed to read animation directory");
+        let animation_sources = get_all_files("vid");
 
         Self {
             frame_rx,
             image_texture,
-            animation_source,
+            animation_sources,
         }
     }
 
@@ -119,6 +120,19 @@ impl eframe::App for EguiApp {
         self.update_frame();
 
     }
+}
+
+fn get_all_files(dir: &str) -> Vec<String> {
+    let mut result: Vec<String> = Vec::new();
+
+    let dir_entries = std::fs::read_dir(dir).expect("Cannot open animation source directory");
+
+    for read_entry in dir_entries {
+        let entry = read_entry.expect("Cannot read animation source file");
+        result.push(entry.path().to_string_lossy().to_string());
+    }
+
+    result
 }
 
 fn print_fps(fps: f32) {
