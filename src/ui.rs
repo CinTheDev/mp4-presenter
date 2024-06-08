@@ -12,10 +12,13 @@ pub const TARGET_FPS: f32 = 60.0;
 const IMAGE_BUFFER_SIZE: usize = 256;
 
 pub struct EguiApp {
-    frame_rx: Option<mpsc::Receiver<egui::ColorImage>>,
     image_texture: egui::TextureHandle,
+    
+    frame_rx: Option<mpsc::Receiver<egui::ColorImage>>,
+    frame_rx_next: Option<mpsc::Receiver<egui::ColorImage>>,
 
     decoder_thread: Option<thread::JoinHandle<()>>,
+    decoder_thread_next: Option<thread::JoinHandle<()>>,
 
     animation_sources: Vec<String>,
     animation_index: usize,
@@ -33,8 +36,10 @@ impl EguiApp {
 
         let mut s = Self {
             frame_rx: None,
+            frame_rx_next: None,
             image_texture,
             decoder_thread: None,
+            decoder_thread_next: None,
             animation_sources,
             animation_index: 0,
         };
@@ -101,25 +106,49 @@ impl EguiApp {
     fn reload_animation(&mut self, ctx: &egui::Context) {
         self.halt_threads();
 
+        match self.frame_rx_next {
+            Some(_) => {
+                self.frame_rx = Some(self.frame_rx_next.take().unwrap());
+                self.decoder_thread = Some(self.decoder_thread_next.take().unwrap());
+            }
+
+            None => {
+                let (frame_rx, decoder_thread) = self.load_animation_from_index(ctx, self.animation_index).unwrap();
+                self.frame_rx = Some(frame_rx);
+                self.decoder_thread = Some(decoder_thread);
+            }
+        }
+
+        let (frame_rx_next, decoder_thread_next) = self.load_animation_from_index(ctx, self.animation_index + 1).unzip();
+        self.frame_rx_next = frame_rx_next;
+        self.decoder_thread_next = decoder_thread_next;
+    }
+
+    fn load_animation_from_index(&self, ctx: &egui::Context, index: usize)
+        -> Option<(mpsc::Receiver<egui::ColorImage>, thread::JoinHandle<()>)>
+    {
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
         let (frame_tx, frame_rx) = mpsc::channel();
 
-        let source_path = self.animation_sources[self.animation_index].as_str();
-        let decoder = VideoDecoder::new(source_path).expect("Failed to init decoder");
-        
-        let decoder_thread = thread::spawn(move || {
-            Self::receive_frames(decoder, video_tx);
-        });
-        
-        let ctx_thread = ctx.clone();
-        let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
+        let source_path = self.animation_sources[index].as_str();
 
-        thread::spawn(move || {
-            Self::receive_frames_timed(frame_tx, video_rx, ctx_thread, target_frame_time);
-        });
-
-        self.frame_rx = Some(frame_rx);
-        self.decoder_thread = Some(decoder_thread);
+        if let Ok(decoder) = VideoDecoder::new(source_path) {
+            let decoder_thread = thread::spawn(move || {
+                Self::receive_frames(decoder, video_tx);
+            });
+            
+            let ctx_thread = ctx.clone();
+            let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
+    
+            thread::spawn(move || {
+                Self::receive_frames_timed(frame_tx, video_rx, ctx_thread, target_frame_time);
+            });
+    
+            Some((frame_rx, decoder_thread))
+        }
+        else {
+            None
+        }
     }
 
     fn receive_frames_timed(
