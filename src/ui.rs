@@ -62,6 +62,14 @@ impl EguiApp {
         ui.image(sized_texture);
     }
 
+    fn next_animation(&mut self) {
+        println!("Next animation");
+    }
+
+    fn previous_animation(&mut self) {
+        println!("Previous animation");
+    }
+
     fn handle_input(&mut self, input: &egui::InputState) {
         for event in input.events.clone() {
             match event {
@@ -73,8 +81,11 @@ impl EguiApp {
                     modifiers: _,
                 } => {
                     match key {
-                        egui::Key::A => {
-                            println!("A pressed");
+                        egui::Key::ArrowRight => {
+                            self.next_animation();
+                        }
+                        egui::Key::ArrowLeft => {
+                            self.previous_animation();
                         }
 
                         _ => {}
