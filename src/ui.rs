@@ -1,4 +1,4 @@
-use eframe::egui::{self, TextBuffer};
+use eframe::egui;
 use ansi_term::Colour;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
