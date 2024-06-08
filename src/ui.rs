@@ -67,15 +67,21 @@ impl EguiApp {
             match event {
                 egui::Event::Key {
                     key,
-                    physical_key,
+                    physical_key: _,
                     pressed: true,
-                    repeat,
-                    modifiers,
+                    repeat: _,
+                    modifiers: _,
                 } => {
-                    println!("Key event");
-                },
+                    match key {
+                        egui::Key::A => {
+                            println!("A pressed");
+                        }
 
-                _ => {},
+                        _ => {}
+                    }
+                }
+
+                _ => {}
             }
         }
     }
