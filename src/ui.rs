@@ -63,7 +63,21 @@ impl EguiApp {
     }
 
     fn handle_input(&mut self, input: &egui::InputState) {
+        for event in input.events.clone() {
+            match event {
+                egui::Event::Key {
+                    key,
+                    physical_key,
+                    pressed: true,
+                    repeat,
+                    modifiers,
+                } => {
+                    println!("Key event");
+                },
 
+                _ => {},
+            }
+        }
     }
 
     fn receive_frames_timed(
