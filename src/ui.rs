@@ -12,7 +12,7 @@ pub const TARGET_FPS: f32 = 60.0;
 const IMAGE_BUFFER_SIZE: usize = 256;
 
 pub struct EguiApp {
-    frame_rx: mpsc::Receiver<egui::ColorImage>,
+    frame_rx: Option<mpsc::Receiver<egui::ColorImage>>,
     image_texture: egui::TextureHandle,
 
     animation_sources: Vec<String>,
@@ -21,20 +21,6 @@ pub struct EguiApp {
 
 impl EguiApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
-        let (frame_tx, frame_rx) = mpsc::channel();
-        
-        thread::spawn(move || {
-            Self::receive_frames(decoder, video_tx);
-        });
-        
-        let ctx_thread = cc.egui_ctx.clone();
-        let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
-
-        thread::spawn(move || {
-            Self::receive_frames_timed(frame_tx, video_rx, ctx_thread, target_frame_time);
-        });
-
         let default_image = egui::ColorImage::new(
             [1920, 1080],
             egui::Color32::RED,
@@ -44,7 +30,7 @@ impl EguiApp {
         let animation_sources = get_all_files("vid");
 
         Self {
-            frame_rx,
+            frame_rx: None,
             image_texture,
             animation_sources,
             animation_index: 0,
@@ -52,7 +38,7 @@ impl EguiApp {
     }
 
     fn update_frame(&mut self) {
-        if let Ok(frame) = self.frame_rx.try_recv() {
+        if let Ok(frame) = self.frame_rx.as_ref().unwrap().try_recv() {
             self.image_texture.set(frame, egui::TextureOptions::default());
         }
     }
@@ -62,23 +48,23 @@ impl EguiApp {
         ui.image(sized_texture);
     }
 
-    fn next_animation(&mut self) {
+    fn next_animation(&mut self, ctx: &egui::Context) {
         if self.animation_index + 1 < self.animation_sources.len() {
             self.animation_index += 1;
-            self.reload_animation();
+            self.reload_animation(ctx);
         }
     }
 
-    fn previous_animation(&mut self) {
+    fn previous_animation(&mut self, ctx: &egui::Context) {
         // If index is already 0 and 1 is subtracted, it will be the greatest integer,
         // in which case this check will fail regardless, so no casting required
         if self.animation_index - 1 < self.animation_sources.len() {
             self.animation_index -= 1;
-            self.reload_animation();
+            self.reload_animation(ctx);
         }
     }
 
-    fn handle_input(&mut self, input: &egui::InputState) {
+    fn handle_input(&mut self, ctx: &egui::Context, input: &egui::InputState) {
         for event in input.events.clone() {
             match event {
                 egui::Event::Key {
@@ -90,10 +76,10 @@ impl EguiApp {
                 } => {
                     match key {
                         egui::Key::ArrowRight => {
-                            self.next_animation();
+                            self.next_animation(ctx);
                         }
                         egui::Key::ArrowLeft => {
-                            self.previous_animation();
+                            self.previous_animation(ctx);
                         }
 
                         _ => {}
@@ -105,8 +91,24 @@ impl EguiApp {
         }
     }
 
-    fn reload_animation(&mut self) {
-        todo!();
+    fn reload_animation(&mut self, ctx: &egui::Context) {
+        let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
+        let (frame_tx, frame_rx) = mpsc::channel();
+
+        let decoder = todo!();
+        
+        thread::spawn(move || {
+            Self::receive_frames(decoder, video_tx);
+        });
+        
+        let ctx_thread = ctx.clone();
+        let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
+
+        thread::spawn(move || {
+            Self::receive_frames_timed(frame_tx, video_rx, ctx_thread, target_frame_time);
+        });
+
+        self.frame_rx = Some(frame_rx);
     }
 
     fn receive_frames_timed(
@@ -167,7 +169,7 @@ impl eframe::App for EguiApp {
 
         self.update_frame();
         
-        ctx.input(|i| self.handle_input(i));
+        ctx.input(|i| self.handle_input(ctx, i));
     }
 }
 
