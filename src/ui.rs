@@ -1,4 +1,4 @@
-use eframe::egui;
+use eframe::egui::{self, TextBuffer};
 use ansi_term::Colour;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
@@ -129,7 +129,9 @@ fn get_all_files(dir: &str) -> Vec<String> {
 
     for read_entry in dir_entries {
         let entry = read_entry.expect("Cannot read animation source file");
-        result.push(entry.path().to_string_lossy().to_string());
+        let path = entry.path().to_str().unwrap().to_owned();
+        println!("Animation source: {}", path);
+        result.push(path);
     }
 
     result
