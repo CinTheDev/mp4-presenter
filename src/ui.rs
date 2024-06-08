@@ -95,7 +95,8 @@ impl EguiApp {
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
         let (frame_tx, frame_rx) = mpsc::channel();
 
-        let decoder = todo!();
+        let source_path = self.animation_sources[self.animation_index].as_str();
+        let decoder = VideoDecoder::new(source_path).expect("Failed to init decoder");
         
         thread::spawn(move || {
             Self::receive_frames(decoder, video_tx);
