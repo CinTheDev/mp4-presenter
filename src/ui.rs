@@ -68,7 +68,7 @@ impl EguiApp {
     }
 
     fn previous_animation(&mut self, ctx: &egui::Context) {
-        // If index is already 0 and 1 is subtracted, it will be the greatest integer,
+        // If index is already 0 and 1 is subtracted, it will overflow to the maximum possible value,
         // in which case this check will fail regardless, so no casting required
         if self.animation_index.overflowing_sub(1).0 < self.animation_sources.len() {
             self.frame_rx_next.take();
