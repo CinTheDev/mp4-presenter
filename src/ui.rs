@@ -31,13 +31,17 @@ impl EguiApp {
 
         let animation_sources = get_all_files("vid");
 
-        Self {
+        let mut s = Self {
             frame_rx: None,
             image_texture,
             decoder_thread: None,
             animation_sources,
             animation_index: 0,
-        }
+        };
+
+        s.reload_animation(&cc.egui_ctx);
+
+        s
     }
 
     fn update_frame(&mut self) {
