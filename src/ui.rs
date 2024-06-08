@@ -223,5 +223,7 @@ fn get_all_files(dir: &str) -> Vec<String> {
         result.push(path);
     }
 
+    result.sort_unstable();
+
     result
 }
