@@ -9,7 +9,6 @@ use ffmpeg_next::util::frame::video::Video;
 const IMAGE_BUFFER_SIZE: usize = 1024;
 
 pub struct VideoDecoder {
-    decoder_thread: Option<thread::JoinHandle<()>>,
     decoder_rx: Option<mpsc::Receiver<Video>>,
 }
 
@@ -18,12 +17,11 @@ impl VideoDecoder {
         let (tx, rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
 
         let path = path.to_owned();
-        let decoder_thread = thread::spawn(move || {
+        thread::spawn(move || {
             VideoDecoder::start_decoding(&path, tx).unwrap();
         });
 
         Ok(Self {
-            decoder_thread: Some(decoder_thread),
             decoder_rx: Some(rx),
         })
     }
@@ -81,10 +79,5 @@ impl VideoDecoder {
 
     pub fn get_frame(&mut self) -> Result<Video, mpsc::RecvError> {
         self.decoder_rx.as_ref().unwrap().recv()
-    }
-
-    pub fn halt(&mut self) {
-        drop(self.decoder_rx.take());
-        self.decoder_thread.take().unwrap().join().unwrap();
     }
 }

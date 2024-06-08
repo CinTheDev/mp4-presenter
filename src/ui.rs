@@ -194,7 +194,6 @@ impl EguiApp {
             );
             if let Err(_) = video_tx.send(img) {
                 // Return if receiver is dropped
-                decoder.halt();
                 return;
             }
         }
