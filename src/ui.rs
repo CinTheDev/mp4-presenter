@@ -20,7 +20,7 @@ pub struct EguiApp {
 }
 
 impl EguiApp {
-    pub fn new(cc: &eframe::CreationContext<'_>, decoder: VideoDecoder) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
         let (frame_tx, frame_rx) = mpsc::channel();
         
