@@ -63,11 +63,19 @@ impl EguiApp {
     }
 
     fn next_animation(&mut self) {
-        println!("Next animation");
+        if self.animation_index + 1 < self.animation_sources.len() {
+            self.animation_index += 1;
+            self.reload_animation();
+        }
     }
 
     fn previous_animation(&mut self) {
-        println!("Previous animation");
+        // If index is already 0 and 1 is subtracted, it will be the greatest integer,
+        // in which case this check will fail regardless, so no casting required
+        if self.animation_index - 1 < self.animation_sources.len() {
+            self.animation_index -= 1;
+            self.reload_animation();
+        }
     }
 
     fn handle_input(&mut self, input: &egui::InputState) {
@@ -95,6 +103,10 @@ impl EguiApp {
                 _ => {}
             }
         }
+    }
+
+    fn reload_animation(&mut self) {
+        todo!();
     }
 
     fn receive_frames_timed(
