@@ -175,15 +175,6 @@ impl EguiApp {
                 let wait_time = target_frame_time - work_time;
                 thread::sleep(wait_time);
             }
-            else {
-                println!("{}", Colour::Yellow.bold().paint("BIG PROBLEM: LAG / BUFFER UNDERFLOW"));
-            }
-
-            // FPS measuring
-            let total_duration = time_frame_start.elapsed();
-
-            let fps = 1.0 / total_duration.as_secs_f32();
-            print_fps(fps);
 
             time_frame_start = Instant::now();
         }
@@ -234,25 +225,4 @@ fn get_all_files(dir: &str) -> Vec<String> {
     }
 
     result
-}
-
-fn print_fps(fps: f32) {
-    let fps_status;
-
-    let fps_deviance = (fps - TARGET_FPS).abs();
-
-    if fps_deviance < 1.0 {
-        return;
-    }
-    else if fps_deviance < 5.0 {
-        fps_status = Colour::Yellow.paint("Not great but ok");
-    }
-    else if fps_deviance < 10.0 {
-        fps_status = Colour::Red.paint("Kinda bad");
-    }
-    else {
-        fps_status = Colour::Red.bold().paint("Absolutely not consistent");
-    }
-
-    println!("FPS DEVIANCE: {} ({:.1} fps)", fps_status, fps);
 }
