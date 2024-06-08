@@ -62,6 +62,10 @@ impl EguiApp {
         ui.image(sized_texture);
     }
 
+    fn handle_input(&mut self, input: &egui::InputState) {
+
+    }
+
     fn receive_frames_timed(
         frame_tx: mpsc::Sender<egui::ColorImage>,
         video_rx: mpsc::Receiver<egui::ColorImage>,
@@ -119,7 +123,8 @@ impl eframe::App for EguiApp {
         });
 
         self.update_frame();
-
+        
+        ctx.input(|i| self.handle_input(i));
     }
 }
 
