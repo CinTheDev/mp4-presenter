@@ -13,6 +13,8 @@ const IMAGE_BUFFER_SIZE: usize = 256;
 pub struct EguiApp {
     frame_rx: mpsc::Receiver<egui::ColorImage>,
     image_texture: egui::TextureHandle,
+
+    animation_source: std::fs::ReadDir,
 }
 
 impl EguiApp {
@@ -37,9 +39,12 @@ impl EguiApp {
         );
         let image_texture = cc.egui_ctx.load_texture("Image", default_image, egui::TextureOptions::default());
 
+        let animation_source = std::fs::read_dir("vid").expect("Failed to read animation directory");
+
         Self {
             frame_rx,
             image_texture,
+            animation_source,
         }
     }
 
