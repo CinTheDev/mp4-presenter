@@ -16,6 +16,7 @@ pub struct EguiApp {
     image_texture: egui::TextureHandle,
 
     animation_sources: Vec<String>,
+    animation_index: usize,
 }
 
 impl EguiApp {
@@ -46,6 +47,7 @@ impl EguiApp {
             frame_rx,
             image_texture,
             animation_sources,
+            animation_index: 0,
         }
     }
 
