@@ -114,7 +114,6 @@ impl EguiApp {
 
 impl eframe::App for EguiApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        ctx.request_repaint();
         egui::CentralPanel::default().show(ctx, |ui| {
             self.draw_frame(ui);
         });
