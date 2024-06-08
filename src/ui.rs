@@ -152,7 +152,7 @@ impl EguiApp {
             let total_duration = time_frame_start.elapsed();
 
             let fps = 1.0 / total_duration.as_secs_f32();
-            //print_fps(fps);
+            print_fps(fps);
 
             time_frame_start = Instant::now();
         }
@@ -208,7 +208,6 @@ fn get_all_files(dir: &str) -> Vec<String> {
             .unwrap()
             .to_owned();
         
-        println!("Animation source: {}", path);
         result.push(path);
     }
 
