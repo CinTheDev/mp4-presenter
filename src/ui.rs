@@ -18,10 +18,12 @@ fn setup(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
 ) {
+    // Player
     let files = get_all_files("vid");
 
     let frame_rx = create_player(&files[0]);
 
+    // Image
     use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
     use bevy::render::render_asset::RenderAssetUsages;
     let mut image = Image::new_fill(
@@ -31,7 +33,7 @@ fn setup(
             depth_or_array_layers: 1,
         },
         TextureDimension::D2,
-        &[0xFF, 0x00, 0x00],
+        &[0xFF, 0x00, 0x00, 0x00],
         TextureFormat::Rgba8UnormSrgb,
         RenderAssetUsages::MAIN_WORLD,
     );
@@ -43,6 +45,9 @@ fn setup(
         player: Mutex::new(frame_rx),
         image_handle
     });
+
+    // Camera
+    commands.spawn(Camera2dBundle::default());
 }
 
 #[derive(Component)]
