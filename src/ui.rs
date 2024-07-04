@@ -81,7 +81,6 @@ fn player_next_frame(
     }
 
     let frame_data = receive_frame.unwrap();
-    println!("Frame data aquired!");
     let image = images.get_mut(&current_player.image_handle).unwrap();
     image.data = frame_data;
 }
