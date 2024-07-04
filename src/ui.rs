@@ -16,7 +16,10 @@ pub fn run() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, player_next_frame)
+        .add_systems(Update, (
+            player_next_frame,
+            check_input,
+        ))
         .run();
 }
 
@@ -84,6 +87,27 @@ fn player_next_frame(
     let image = images.get_mut(&player.image_handle).unwrap();
     image.data = frame_data;
 }
+
+fn check_input(
+    keys: Res<ButtonInput<KeyCode>>,
+) {
+    for key in keys.get_just_pressed() {
+        match key {
+            KeyCode::ArrowLeft => {
+                println!("Left arrow");
+            },
+            KeyCode::ArrowRight => {
+                println!("Right arrow");
+            },
+
+            _ => (),
+        }
+    }
+}
+
+// --------------------
+// | DECODING RELATED |
+// --------------------
 
 fn create_decoder(path: &str) -> mpsc::Receiver<Vec<u8>> {
     let decoder = VideoDecoder::new(path).unwrap();
