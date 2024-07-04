@@ -55,33 +55,33 @@ fn setup(
         ..default()
     });
 
-    commands.spawn(CurrentPlayer {
-        player: Mutex::new(frame_rx),
+    commands.spawn(Player {
+        frame_rx: Mutex::new(frame_rx),
         image_handle
     });
 }
 
 #[derive(Component)]
-struct CurrentPlayer {
-    player: Mutex<mpsc::Receiver<Vec<u8>>>,
+struct Player {
+    frame_rx: Mutex<mpsc::Receiver<Vec<u8>>>,
     image_handle: Handle<Image>,
 }
 
 fn player_next_frame(
-    current_player_query: Query<&CurrentPlayer>,
+    player_query: Query<&Player>,
     mut images: ResMut<Assets<Image>>,
 ) {
-    let current_player = current_player_query.single();
-    let player = current_player.player.lock().unwrap();
+    let player = player_query.single();
+    let frame_rx = player.frame_rx.lock().unwrap();
 
-    let receive_frame = player.recv();
+    let receive_frame = frame_rx.recv();
 
     if receive_frame.is_err() {
         return
     }
 
     let frame_data = receive_frame.unwrap();
-    let image = images.get_mut(&current_player.image_handle).unwrap();
+    let image = images.get_mut(&player.image_handle).unwrap();
     image.data = frame_data;
 }
 
