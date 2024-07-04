@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::tasks::AsyncComputeTaskPool;
-use std::sync::mpsc;
+use std::sync::{mpsc, Mutex};
 
 use crate::video_decoder::VideoDecoder;
 
@@ -17,6 +17,11 @@ fn setup(_commands: Commands) {
     let files = get_all_files("vid");
 
     create_player(&files[0]);
+}
+
+#[derive(Resource)]
+struct CurrentPlayer {
+    player: Mutex<mpsc::Receiver<Vec<u8>>>,
 }
 
 fn create_player(path: &str) -> mpsc::Receiver<Vec<u8>> {
