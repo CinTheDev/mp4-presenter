@@ -46,7 +46,7 @@ impl EguiApp {
             debug_frame_timer: Instant::now(),
         };
 
-        s.reload_animation(&cc.egui_ctx);
+        s.reload_animation();
 
         s
     }
@@ -67,14 +67,14 @@ impl EguiApp {
         ui.image(sized_texture);
     }
 
-    fn next_animation(&mut self, ctx: &egui::Context) {
+    fn next_animation(&mut self) {
         if self.animation_index + 1 < self.animation_sources.len() {
             self.animation_index += 1;
-            self.reload_animation(ctx);
+            self.reload_animation();
         }
     }
 
-    fn previous_animation(&mut self, ctx: &egui::Context) {
+    fn previous_animation(&mut self) {
         // If index is already 0 and 1 is subtracted, it will overflow to the maximum possible value,
         // in which case this check will fail regardless, so no casting required
         if self.animation_index.overflowing_sub(1).0 < self.animation_sources.len() {
@@ -82,11 +82,11 @@ impl EguiApp {
             self.decoder_thread_next.take();
 
             self.animation_index -= 1;
-            self.reload_animation(ctx);
+            self.reload_animation();
         }
     }
 
-    fn handle_input(&mut self, ctx: &egui::Context, input: &egui::InputState) {
+    fn handle_input(&mut self, input: &egui::InputState) {
         for event in input.events.clone() {
             match event {
                 egui::Event::Key {
@@ -98,10 +98,10 @@ impl EguiApp {
                 } => {
                     match key {
                         egui::Key::ArrowRight => {
-                            self.next_animation(ctx);
+                            self.next_animation();
                         }
                         egui::Key::ArrowLeft => {
-                            self.previous_animation(ctx);
+                            self.previous_animation();
                         }
 
                         _ => {}
@@ -113,7 +113,7 @@ impl EguiApp {
         }
     }
 
-    fn reload_animation(&mut self, ctx: &egui::Context) {
+    fn reload_animation(&mut self) {
         match self.frame_rx_next {
             Some(_) => {
                 self.frame_rx = Some(self.frame_rx_next.take().unwrap());
@@ -121,18 +121,18 @@ impl EguiApp {
             }
 
             None => {
-                let (frame_rx, decoder_thread) = self.load_animation_from_index(ctx, self.animation_index).unwrap();
+                let (frame_rx, decoder_thread) = self.load_animation_from_index(self.animation_index).unwrap();
                 self.frame_rx = Some(frame_rx);
                 self.decoder_thread = Some(decoder_thread);
             }
         }
 
-        let (frame_rx_next, decoder_thread_next) = self.load_animation_from_index(ctx, self.animation_index + 1).unzip();
+        let (frame_rx_next, decoder_thread_next) = self.load_animation_from_index(self.animation_index + 1).unzip();
         self.frame_rx_next = frame_rx_next;
         self.decoder_thread_next = decoder_thread_next;
     }
 
-    fn load_animation_from_index(&self, ctx: &egui::Context, index: usize)
+    fn load_animation_from_index(&self, index: usize)
         -> Option<(mpsc::Receiver<egui::ColorImage>, thread::JoinHandle<()>)>
     {
         let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
@@ -150,11 +150,10 @@ impl EguiApp {
             Self::receive_frames(decoder, video_tx);
         });
         
-        let ctx_thread = ctx.clone();
         let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
 
         thread::spawn(move || {
-            Self::receive_frames_timed(frame_tx, video_rx, ctx_thread, target_frame_time);
+            Self::receive_frames_timed(frame_tx, video_rx, target_frame_time);
         });
 
         Some((frame_rx, decoder_thread))
@@ -163,7 +162,6 @@ impl EguiApp {
     fn receive_frames_timed(
         frame_tx: mpsc::SyncSender<egui::ColorImage>,
         video_rx: mpsc::Receiver<egui::ColorImage>,
-        ctx: egui::Context,
         target_frame_time: Duration,
     ) {
         let mut time_frame_start = Instant::now();
@@ -175,19 +173,7 @@ impl EguiApp {
             let transmit_response = frame_tx.send(received.unwrap());
             if transmit_response.is_err() { return }
 
-            //ctx.request_repaint();
-
-            //let mut work_time = time_frame_start.elapsed();
-
-            while time_frame_start.elapsed() < target_frame_time {
-                //thread::sleep(Duration::from_millis(1));
-            }
-            /*
-            if work_time < target_frame_time {
-                let wait_time = target_frame_time - work_time;
-                thread::sleep(wait_time);
-            }
-            */
+            while time_frame_start.elapsed() < target_frame_time { }
 
             time_frame_start = Instant::now();
         }
@@ -215,7 +201,7 @@ impl eframe::App for EguiApp {
 
         self.update_frame();
         
-        ctx.input(|i| self.handle_input(ctx, i));
+        ctx.input(|i| self.handle_input(i));
 
         ctx.request_repaint();
     }
