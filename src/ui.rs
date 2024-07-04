@@ -6,6 +6,12 @@ use crate::video_decoder::VideoDecoder;
 
 const IMG_BUFFER: usize = 256;
 
+#[derive(Component)]
+struct Player {
+    frame_rx: Mutex<mpsc::Receiver<Vec<u8>>>,
+    image_handle: Handle<Image>,
+}
+
 pub fn run() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -44,7 +50,7 @@ fn setup(
     // Camera
     commands.spawn(Camera2dBundle::default());
 
-    // Image
+    // Image Bundle
     commands.spawn(ImageBundle {
         style: Style {
             width: Val::Percent(100.0),
@@ -59,12 +65,6 @@ fn setup(
         frame_rx: Mutex::new(frame_rx),
         image_handle
     });
-}
-
-#[derive(Component)]
-struct Player {
-    frame_rx: Mutex<mpsc::Receiver<Vec<u8>>>,
-    image_handle: Handle<Image>,
 }
 
 fn player_next_frame(
