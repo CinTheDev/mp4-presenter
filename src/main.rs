@@ -1,6 +1,6 @@
 mod video_decoder;
 
-//mod ui;
+mod ui;
 //use ui::EguiApp;
 
 fn main() {
