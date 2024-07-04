@@ -18,7 +18,10 @@ struct Player {
 pub fn run() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (
+            setup,
+            maximize_window,
+        ))
         .add_systems(Update, (
             player_next_frame,
             check_input,
@@ -74,6 +77,11 @@ fn setup(
         file_list: files,
         animation_index: 0,
     });
+}
+
+fn maximize_window(mut window_query: Query<&mut Window, With<bevy::window::PrimaryWindow>>) {
+    let mut window = window_query.single_mut();
+    window.mode = bevy::window::WindowMode::BorderlessFullscreen;
 }
 
 fn player_next_frame(
