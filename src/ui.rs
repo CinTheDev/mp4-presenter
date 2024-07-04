@@ -10,6 +10,7 @@ const IMG_BUFFER: usize = 256;
 struct Player {
     frame_rx: Mutex<mpsc::Receiver<Vec<u8>>>,
     image_handle: Handle<Image>,
+    animation_index: usize,
 }
 
 pub fn run() {
@@ -66,7 +67,8 @@ fn setup(
 
     commands.spawn(Player {
         frame_rx: Mutex::new(frame_rx),
-        image_handle
+        image_handle,
+        animation_index: 0,
     });
 }
 
@@ -109,7 +111,9 @@ fn check_input(
 fn load_next_video(player: &mut Player) {
     let all_files = get_all_files("vid"); // TODO: Cache these
 
-    let frame_rx = create_decoder(&all_files[1]);
+    player.animation_index += 1; // TODO: Clamp value
+
+    let frame_rx = create_decoder(&all_files[player.animation_index]);
     player.frame_rx = Mutex::new(frame_rx);
 }
 
