@@ -4,7 +4,7 @@ A simple program written in Rust made for mp4-based presentations.
 
 The crate `ffmpeg-next` is used for reading the input video files.
 
-The video player is based on egui.
+The video player is based on bevy.
 
 ## Functionality
 
@@ -24,7 +24,7 @@ previous video with the left arrow key, although it shouldn't be necessary in no
 cases.
 
 If your videos are seamless between each other (last frame of some video = first frame
-of next video) it should also play seamlessly with this player. (And that's the whol
+of next video) it should also play seamlessly with this player. (And that's the whole
 reason I started this project).
 
 ## Helpful ressources
