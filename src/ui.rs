@@ -53,6 +53,7 @@ struct CurrentPlayer {
 
 fn player_next_frame(
     current_player_query: Query<&CurrentPlayer>,
+    mut images: ResMut<Assets<Image>>,
 ) {
     let current_player = current_player_query.single();
     let player = current_player.player.lock().unwrap();
@@ -65,7 +66,8 @@ fn player_next_frame(
 
     let frame_data = receive_frame.unwrap();
     println!("Frame data aquired!");
-    drop(frame_data);
+    let image = images.get_mut(&current_player.image_handle).unwrap();
+    image.data = frame_data;
 }
 
 fn create_player(path: &str) -> mpsc::Receiver<Vec<u8>> {
