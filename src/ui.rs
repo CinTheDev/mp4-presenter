@@ -10,6 +10,8 @@ const IMG_BUFFER: usize = 256;
 struct Player {
     frame_rx: Mutex<mpsc::Receiver<Vec<u8>>>,
     image_handle: Handle<Image>,
+
+    file_list: Vec<String>,
     animation_index: usize,
 }
 
@@ -28,11 +30,6 @@ fn setup(
     mut commands: Commands,
     mut images: ResMut<Assets<Image>>,
 ) {
-    // Player
-    let files = get_all_files("vid");
-
-    let frame_rx = create_decoder(&files[0]);
-
     // Image
     use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
     use bevy::render::render_asset::RenderAssetUsages;
@@ -65,9 +62,16 @@ fn setup(
         ..default()
     });
 
+    // Player
+    let files = get_all_files("vid");
+
+    let frame_rx = create_decoder(&files[0]);
+
     commands.spawn(Player {
         frame_rx: Mutex::new(frame_rx),
         image_handle,
+
+        file_list: files,
         animation_index: 0,
     });
 }
@@ -109,10 +113,8 @@ fn check_input(
 }
 
 fn load_next_video(player: &mut Player, index_offset: isize) {
-    let all_files = get_all_files("vid"); // TODO: Cache these
-
     let animation_index = player.animation_index as isize + index_offset;
-    let max_allowed = all_files.len() as isize - 1;
+    let max_allowed = player.file_list.len() as isize - 1;
 
     // Don't reload when new index is out of bounds
     if animation_index < 0 || animation_index > max_allowed {
@@ -120,8 +122,9 @@ fn load_next_video(player: &mut Player, index_offset: isize) {
     }
 
     player.animation_index = animation_index as usize;
+    let next_file = &player.file_list[player.animation_index];
 
-    let frame_rx = create_decoder(&all_files[player.animation_index]);
+    let frame_rx = create_decoder(next_file);
     player.frame_rx = Mutex::new(frame_rx);
 }
 
