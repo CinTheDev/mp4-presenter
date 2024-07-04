@@ -33,7 +33,13 @@ fn player_next_frame(
 ) {
     let player = current_player_res.player.lock().unwrap();
 
-    let frame_data = player.recv().unwrap();
+    let receive_frame = player.recv();
+
+    if receive_frame.is_err() {
+        return
+    }
+
+    let frame_data = receive_frame.unwrap();
     println!("Frame data aquired!");
     drop(frame_data);
 }
