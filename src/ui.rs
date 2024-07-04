@@ -21,7 +21,7 @@ fn setup(
     // Player
     let files = get_all_files("vid");
 
-    let frame_rx = create_player(&files[0]);
+    let frame_rx = create_decoder(&files[0]);
 
     // Image
     use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
@@ -85,20 +85,20 @@ fn player_next_frame(
     image.data = frame_data;
 }
 
-fn create_player(path: &str) -> mpsc::Receiver<Vec<u8>> {
+fn create_decoder(path: &str) -> mpsc::Receiver<Vec<u8>> {
     let decoder = VideoDecoder::new(path).unwrap();
 
     let (tx, rx) = mpsc::sync_channel(IMG_BUFFER);
 
     let task_pool = AsyncComputeTaskPool::get();
     task_pool.spawn(async move {
-        run_player(decoder, tx);
+        decode(decoder, tx);
     }).detach();
 
     rx
 }
 
-fn run_player(mut decoder: VideoDecoder, tx: mpsc::SyncSender<Vec<u8>>) {
+fn decode(mut decoder: VideoDecoder, tx: mpsc::SyncSender<Vec<u8>>) {
     while let Ok(frame) = decoder.get_frame() {
         let frame_vec = Vec::from(frame.data(0));
 
