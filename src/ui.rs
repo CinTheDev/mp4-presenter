@@ -35,7 +35,7 @@ fn setup(
         TextureDimension::D2,
         &[0xFF, 0x00, 0x00, 0xFF],
         TextureFormat::Rgba8UnormSrgb,
-        RenderAssetUsages::MAIN_WORLD,
+        RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD,
     );
     image.texture_descriptor.usage = TextureUsages::COPY_DST | TextureUsages::TEXTURE_BINDING;
 
