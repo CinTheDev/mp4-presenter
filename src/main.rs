@@ -1,13 +1,12 @@
-use eframe;
-
 mod video_decoder;
 
-mod ui;
-use ui::EguiApp;
+//mod ui;
+//use ui::EguiApp;
 
 fn main() {
     ffmpeg_next::init().unwrap();
 
+    /*
     let native_options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder {
             fullscreen: Some(true),
@@ -21,4 +20,5 @@ fn main() {
         native_options,
         Box::new(|cc| Box::new(EguiApp::new(cc))),
     ).unwrap();
+*/
 }
