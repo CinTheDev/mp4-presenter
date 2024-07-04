@@ -90,6 +90,7 @@ fn player_next_frame(
 
 fn check_input(
     keys: Res<ButtonInput<KeyCode>>,
+    mut player_query: Query<&mut Player>,
 ) {
     for key in keys.get_just_pressed() {
         match key {
@@ -97,12 +98,19 @@ fn check_input(
                 println!("Left arrow");
             },
             KeyCode::ArrowRight => {
-                println!("Right arrow");
+                load_next_video(player_query.single_mut().as_mut());
             },
 
             _ => (),
         }
     }
+}
+
+fn load_next_video(player: &mut Player) {
+    let all_files = get_all_files("vid"); // TODO: Cache these
+
+    let frame_rx = create_decoder(&all_files[1]);
+    player.frame_rx = Mutex::new(frame_rx);
 }
 
 // --------------------
