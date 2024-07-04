@@ -7,8 +7,21 @@ pub fn run() {
         .run();
 }
 
-fn setup() {
-    println!("Bevy setup");
+fn setup(commands: Commands) {
+    let files = get_all_files("vid");
+
+    create_player(commands, &files[0]);
+}
+
+fn create_player(mut commands: Commands, path: &str) {
+    commands.spawn(Player {
+        path: path.to_owned(),
+    });
+}
+
+#[derive(Component)]
+struct Player {
+    path: String,
 }
 
 fn get_all_files(dir: &str) -> Vec<String> {
