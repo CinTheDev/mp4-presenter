@@ -1,209 +1,157 @@
-use eframe::egui;
-use std::sync::mpsc;
-use std::time::{Duration, Instant};
-use std::thread;
-use std::vec::Vec;
+use bevy::prelude::*;
+use bevy::tasks::AsyncComputeTaskPool;
+use std::sync::{mpsc, Mutex};
 
 use crate::video_decoder::VideoDecoder;
 
-pub const TARGET_FPS: f32 = 60.0;
+const IMG_BUFFER: usize = 256;
 
-const IMAGE_BUFFER_SIZE: usize = 256;
+#[derive(Component)]
+struct Player {
+    frame_rx: Mutex<mpsc::Receiver<Vec<u8>>>,
+    image_handle: Handle<Image>,
 
-pub struct EguiApp {
-    image_texture: egui::TextureHandle,
-    
-    frame_rx: Option<mpsc::Receiver<egui::ColorImage>>,
-    frame_rx_next: Option<mpsc::Receiver<egui::ColorImage>>,
-
-    decoder_thread: Option<thread::JoinHandle<()>>,
-    decoder_thread_next: Option<thread::JoinHandle<()>>,
-
-    animation_sources: Vec<String>,
+    file_list: Vec<String>,
     animation_index: usize,
-
-    debug_frame_timer: Instant,
 }
 
-impl EguiApp {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let default_image = egui::ColorImage::new(
-            [1, 1],
-            egui::Color32::RED,
-        );
-        let image_texture = cc.egui_ctx.load_texture("Image", default_image, egui::TextureOptions::default());
+pub fn run() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_systems(Startup, setup)
+        .add_systems(Update, (
+            player_next_frame,
+            check_input,
+        ))
+        .run();
+}
 
-        let animation_sources = get_all_files("vid");
+fn setup(
+    mut commands: Commands,
+    mut images: ResMut<Assets<Image>>,
+) {
+    // Image
+    use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
+    use bevy::render::render_asset::RenderAssetUsages;
+    let mut image = Image::new_fill(
+        Extent3d {
+            width: 1920,
+            height: 1080,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &[0xFF, 0x00, 0x00, 0xFF],
+        TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD,
+    );
+    image.texture_descriptor.usage = TextureUsages::COPY_DST | TextureUsages::TEXTURE_BINDING;
 
-        let mut s = Self {
-            frame_rx: None,
-            frame_rx_next: None,
-            image_texture,
-            decoder_thread: None,
-            decoder_thread_next: None,
-            animation_sources,
-            animation_index: 0,
-            debug_frame_timer: Instant::now(),
-        };
+    let image_handle = images.add(image);
 
-        s.reload_animation();
+    // Camera
+    commands.spawn(Camera2dBundle::default());
 
-        s
+    // Image Bundle
+    commands.spawn(ImageBundle {
+        style: Style {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
+        },
+        image: image_handle.clone().into(),
+        ..default()
+    });
+
+    // Player
+    let files = get_all_files("vid");
+
+    let frame_rx = create_decoder(&files[0]);
+
+    commands.spawn(Player {
+        frame_rx: Mutex::new(frame_rx),
+        image_handle,
+
+        file_list: files,
+        animation_index: 0,
+    });
+}
+
+fn player_next_frame(
+    player_query: Query<&Player>,
+    mut images: ResMut<Assets<Image>>,
+) {
+    let player = player_query.single();
+    let frame_rx = player.frame_rx.lock().unwrap();
+
+    let receive_frame = frame_rx.recv();
+
+    if receive_frame.is_err() {
+        return
     }
 
-    fn update_frame(&mut self) {
-        if let Ok(frame) = self.frame_rx.as_ref().unwrap().try_recv() {
-            let delta_time = self.debug_frame_timer.elapsed();
-            self.debug_frame_timer = Instant::now();
+    let frame_data = receive_frame.unwrap();
+    let image = images.get_mut(&player.image_handle).unwrap();
+    image.data = frame_data;
+}
 
-            print_fps(delta_time);
+fn check_input(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut player_query: Query<&mut Player>,
+) {
+    for key in keys.get_just_pressed() {
+        match key {
+            KeyCode::ArrowLeft => {
+                load_next_video(player_query.single_mut().as_mut(), -1);
+            },
+            KeyCode::ArrowRight => {
+                load_next_video(player_query.single_mut().as_mut(), 1);
+            },
 
-            self.image_texture.set(frame, egui::TextureOptions::default());
-        }
-    }
-
-    fn draw_frame(&mut self, ui: &mut egui::Ui) {
-        let sized_texture = egui::load::SizedTexture::new(self.image_texture.id(), ui.available_rect_before_wrap().size());
-        ui.image(sized_texture);
-    }
-
-    fn next_animation(&mut self) {
-        if self.animation_index + 1 < self.animation_sources.len() {
-            self.animation_index += 1;
-            self.reload_animation();
-        }
-    }
-
-    fn previous_animation(&mut self) {
-        // If index is already 0 and 1 is subtracted, it will overflow to the maximum possible value,
-        // in which case this check will fail regardless, so no casting required
-        if self.animation_index.overflowing_sub(1).0 < self.animation_sources.len() {
-            self.frame_rx_next.take();
-            self.decoder_thread_next.take();
-
-            self.animation_index -= 1;
-            self.reload_animation();
-        }
-    }
-
-    fn handle_input(&mut self, input: &egui::InputState) {
-        for event in input.events.clone() {
-            match event {
-                egui::Event::Key {
-                    key,
-                    physical_key: _,
-                    pressed: true,
-                    repeat: _,
-                    modifiers: _,
-                } => {
-                    match key {
-                        egui::Key::ArrowRight => {
-                            self.next_animation();
-                        }
-                        egui::Key::ArrowLeft => {
-                            self.previous_animation();
-                        }
-
-                        _ => {}
-                    }
-                }
-
-                _ => {}
-            }
-        }
-    }
-
-    fn reload_animation(&mut self) {
-        match self.frame_rx_next {
-            Some(_) => {
-                self.frame_rx = Some(self.frame_rx_next.take().unwrap());
-                self.decoder_thread = Some(self.decoder_thread_next.take().unwrap());
-            }
-
-            None => {
-                let (frame_rx, decoder_thread) = self.load_animation_from_index(self.animation_index).unwrap();
-                self.frame_rx = Some(frame_rx);
-                self.decoder_thread = Some(decoder_thread);
-            }
-        }
-
-        let (frame_rx_next, decoder_thread_next) = self.load_animation_from_index(self.animation_index + 1).unzip();
-        self.frame_rx_next = frame_rx_next;
-        self.decoder_thread_next = decoder_thread_next;
-    }
-
-    fn load_animation_from_index(&self, index: usize)
-        -> Option<(mpsc::Receiver<egui::ColorImage>, thread::JoinHandle<()>)>
-    {
-        let (video_tx, video_rx) = mpsc::sync_channel(IMAGE_BUFFER_SIZE);
-        let (frame_tx, frame_rx) = mpsc::sync_channel(0);
-
-        if index >= self.animation_sources.len() {
-            return None;
-        }
-
-        let source_path = self.animation_sources[index].as_str();
-
-        let decoder = VideoDecoder::new(source_path).expect("Failed to init decoder");
-
-        let decoder_thread = thread::spawn(move || {
-            Self::receive_frames(decoder, video_tx);
-        });
-        
-        let target_frame_time = Duration::from_secs_f32(1.0 / TARGET_FPS);
-
-        thread::spawn(move || {
-            Self::receive_frames_timed(frame_tx, video_rx, target_frame_time);
-        });
-
-        Some((frame_rx, decoder_thread))
-    }
-
-    fn receive_frames_timed(
-        frame_tx: mpsc::SyncSender<egui::ColorImage>,
-        video_rx: mpsc::Receiver<egui::ColorImage>,
-        target_frame_time: Duration,
-    ) {
-        let mut time_frame_start = Instant::now();
-
-        loop {
-            let received = video_rx.recv();
-            if received.is_err() { return }
-
-            let transmit_response = frame_tx.send(received.unwrap());
-            if transmit_response.is_err() { return }
-
-            while time_frame_start.elapsed() < target_frame_time { }
-
-            time_frame_start = Instant::now();
-        }
-    }
-
-    fn receive_frames(mut decoder: VideoDecoder, video_tx: mpsc::SyncSender<egui::ColorImage>) {
-        while let Ok(frame) = decoder.get_frame() {
-            let img = egui::ColorImage::from_rgb(
-                [frame.width() as usize, frame.height() as usize],
-                frame.data(0),
-            );
-            if let Err(_) = video_tx.send(img) {
-                // Return if receiver is dropped
-                return;
-            }
+            _ => (),
         }
     }
 }
 
-impl eframe::App for EguiApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().frame(egui::Frame::none()).show(ctx, |ui| {
-            self.draw_frame(ui);
-        });
+fn load_next_video(player: &mut Player, index_offset: isize) {
+    let animation_index = player.animation_index as isize + index_offset;
+    let max_allowed = player.file_list.len() as isize - 1;
 
-        self.update_frame();
-        
-        ctx.input(|i| self.handle_input(i));
+    // Don't reload when new index is out of bounds
+    if animation_index < 0 || animation_index > max_allowed {
+        return
+    }
 
-        ctx.request_repaint();
+    player.animation_index = animation_index as usize;
+    let next_file = &player.file_list[player.animation_index];
+
+    let frame_rx = create_decoder(next_file);
+    player.frame_rx = Mutex::new(frame_rx);
+}
+
+// --------------------
+// | DECODING RELATED |
+// --------------------
+
+fn create_decoder(path: &str) -> mpsc::Receiver<Vec<u8>> {
+    let decoder = VideoDecoder::new(path).unwrap();
+
+    let (tx, rx) = mpsc::sync_channel(IMG_BUFFER);
+
+    let task_pool = AsyncComputeTaskPool::get();
+    task_pool.spawn(async move {
+        decode(decoder, tx);
+    }).detach();
+
+    rx
+}
+
+fn decode(mut decoder: VideoDecoder, tx: mpsc::SyncSender<Vec<u8>>) {
+    while let Ok(frame) = decoder.get_frame() {
+        let frame_vec = Vec::from(frame.data(0));
+
+        if let Err(_) = tx.send(frame_vec) {
+            return;
+        }
     }
 }
 
@@ -228,18 +176,4 @@ fn get_all_files(dir: &str) -> Vec<String> {
     result.sort_unstable();
 
     result
-}
-
-fn print_fps(delta_time: Duration) {
-    let fps = 1.0 / delta_time.as_secs_f32();
-    let target_fps = 60.0;
-
-    let deviance = fps - target_fps;
-
-    if deviance > 3.0 {
-        println!("MAJOR FRAME DEVIANCE: {}", fps);
-    }
-    else if deviance > 1.0 {
-        println!("MINOR FRAME DEVIANCE: {}", fps);
-    }
 }

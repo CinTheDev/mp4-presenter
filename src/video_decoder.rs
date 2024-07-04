@@ -45,7 +45,7 @@ impl VideoDecoder {
             decoder.format(),
             decoder.width(),
             decoder.height(),
-            Pixel::RGB24,
+            Pixel::RGBA,
             decoder.width(),
             decoder.height(),
             Flags::BILINEAR,
