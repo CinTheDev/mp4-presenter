@@ -41,13 +41,24 @@ fn setup(
 
     let image_handle = images.add(image);
 
+    // Camera
+    commands.spawn(Camera2dBundle::default());
+
+    // Image
+    commands.spawn(ImageBundle {
+        style: Style {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
+        },
+        image: image_handle.clone().into(),
+        ..default()
+    });
+
     commands.spawn(CurrentPlayer {
         player: Mutex::new(frame_rx),
         image_handle
     });
-
-    // Camera
-    commands.spawn(Camera2dBundle::default());
 }
 
 #[derive(Component)]
