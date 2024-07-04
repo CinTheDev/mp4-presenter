@@ -82,9 +82,8 @@ fn player_next_frame(
 
     let frame_data = receive_frame.unwrap();
     println!("Frame data aquired!");
-    let _image = images.get_mut(&current_player.image_handle).unwrap();
-    //image.data = frame_data;
-    drop(frame_data);
+    let image = images.get_mut(&current_player.image_handle).unwrap();
+    image.data = frame_data;
 }
 
 fn create_player(path: &str) -> mpsc::Receiver<Vec<u8>> {
