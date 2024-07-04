@@ -21,6 +21,8 @@ pub struct EguiApp {
 
     animation_sources: Vec<String>,
     animation_index: usize,
+
+    debug_frame_timer: Instant,
 }
 
 impl EguiApp {
@@ -41,6 +43,7 @@ impl EguiApp {
             decoder_thread_next: None,
             animation_sources,
             animation_index: 0,
+            debug_frame_timer: Instant::now(),
         };
 
         s.reload_animation(&cc.egui_ctx);
@@ -50,6 +53,11 @@ impl EguiApp {
 
     fn update_frame(&mut self) {
         if let Ok(frame) = self.frame_rx.as_ref().unwrap().try_recv() {
+            let delta_time = self.debug_frame_timer.elapsed();
+            self.debug_frame_timer = Instant::now();
+
+            print_fps(delta_time);
+
             self.image_texture.set(frame, egui::TextureOptions::default());
         }
     }
@@ -228,4 +236,18 @@ fn get_all_files(dir: &str) -> Vec<String> {
     result.sort_unstable();
 
     result
+}
+
+fn print_fps(delta_time: Duration) {
+    let fps = 1.0 / delta_time.as_secs_f32();
+    let target_fps = 60.0;
+
+    let deviance = fps - target_fps;
+
+    if deviance > 3.0 {
+        println!("MAJOR FRAME DEVIANCE: {}", fps);
+    }
+    else if deviance > 1.0 {
+        println!("MINOR FRAME DEVIANCE: {}", fps);
+    }
 }
