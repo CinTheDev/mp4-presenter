@@ -177,11 +177,17 @@ impl EguiApp {
 
             //ctx.request_repaint();
 
-            let work_time = time_frame_start.elapsed();
+            //let mut work_time = time_frame_start.elapsed();
+
+            while time_frame_start.elapsed() < target_frame_time {
+                //thread::sleep(Duration::from_millis(1));
+            }
+            /*
             if work_time < target_frame_time {
                 let wait_time = target_frame_time - work_time;
                 thread::sleep(wait_time);
             }
+            */
 
             time_frame_start = Instant::now();
         }
