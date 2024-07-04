@@ -1,3 +1,16 @@
+use bevy::prelude::*;
+
+pub fn run() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_systems(Startup, setup)
+        .run();
+}
+
+fn setup() {
+    println!("Bevy setup");
+}
+
 fn get_all_files(dir: &str) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
 
