@@ -167,7 +167,7 @@ impl EguiApp {
             let transmit_response = frame_tx.send(received.unwrap());
             if transmit_response.is_err() { return }
 
-            ctx.request_repaint();
+            //ctx.request_repaint();
 
             let work_time = time_frame_start.elapsed();
             if work_time < target_frame_time {
@@ -202,6 +202,8 @@ impl eframe::App for EguiApp {
         self.update_frame();
         
         ctx.input(|i| self.handle_input(ctx, i));
+
+        ctx.request_repaint();
     }
 }
 
