@@ -14,24 +14,48 @@ pub fn run() {
         .run();
 }
 
-fn setup(mut commands: Commands) {
+fn setup(
+    mut commands: Commands,
+    mut images: ResMut<Assets<Image>>,
+) {
     let files = get_all_files("vid");
 
     let frame_rx = create_player(&files[0]);
-    commands.insert_resource(CurrentPlayer {
+
+    use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat, TextureUsages};
+    use bevy::render::render_asset::RenderAssetUsages;
+    let mut image = Image::new_fill(
+        Extent3d {
+            width: 1920,
+            height: 1080,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &[0xFF, 0x00, 0x00],
+        TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::MAIN_WORLD,
+    );
+    image.texture_descriptor.usage = TextureUsages::COPY_DST | TextureUsages::TEXTURE_BINDING;
+
+    let image_handle = images.add(image);
+
+    commands.spawn(CurrentPlayer {
         player: Mutex::new(frame_rx),
+        image_handle
     });
 }
 
-#[derive(Resource)]
+#[derive(Component)]
 struct CurrentPlayer {
     player: Mutex<mpsc::Receiver<Vec<u8>>>,
+    image_handle: Handle<Image>,
 }
 
 fn player_next_frame(
-    current_player_res: Res<CurrentPlayer>,
+    current_player_query: Query<&CurrentPlayer>,
 ) {
-    let player = current_player_res.player.lock().unwrap();
+    let current_player = current_player_query.single();
+    let player = current_player.player.lock().unwrap();
 
     let receive_frame = player.recv();
 
