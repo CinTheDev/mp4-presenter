@@ -97,10 +97,10 @@ fn check_input(
     for key in keys.get_just_pressed() {
         match key {
             KeyCode::ArrowLeft => {
-                println!("Left arrow");
+                load_next_video(player_query.single_mut().as_mut(), -1);
             },
             KeyCode::ArrowRight => {
-                load_next_video(player_query.single_mut().as_mut());
+                load_next_video(player_query.single_mut().as_mut(), 1);
             },
 
             _ => (),
@@ -108,10 +108,18 @@ fn check_input(
     }
 }
 
-fn load_next_video(player: &mut Player) {
+fn load_next_video(player: &mut Player, index_offset: isize) {
     let all_files = get_all_files("vid"); // TODO: Cache these
 
-    player.animation_index += 1; // TODO: Clamp value
+    let animation_index = player.animation_index as isize + index_offset;
+    let max_allowed = all_files.len() as isize - 1;
+
+    // Don't reload when new index is out of bounds
+    if animation_index < 0 || animation_index > max_allowed {
+        return
+    }
+
+    player.animation_index = animation_index as usize;
 
     let frame_rx = create_decoder(&all_files[player.animation_index]);
     player.frame_rx = Mutex::new(frame_rx);
