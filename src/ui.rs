@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::video_decoder::VideoDecoder;
+
 pub fn run() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -15,13 +17,13 @@ fn setup(commands: Commands) {
 
 fn create_player(mut commands: Commands, path: &str) {
     commands.spawn(Player {
-        path: path.to_owned(),
+        path: VideoDecoder::new(path),
     });
 }
 
 #[derive(Component)]
 struct Player {
-    path: String,
+    decoder: VideoDecoder,
 }
 
 fn get_all_files(dir: &str) -> Vec<String> {
