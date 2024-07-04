@@ -10,18 +10,32 @@ pub fn run() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
+        .add_systems(Update, player_next_frame)
         .run();
 }
 
-fn setup(_commands: Commands) {
+fn setup(mut commands: Commands) {
     let files = get_all_files("vid");
 
-    create_player(&files[0]);
+    let frame_rx = create_player(&files[0]);
+    commands.insert_resource(CurrentPlayer {
+        player: Mutex::new(frame_rx),
+    });
 }
 
 #[derive(Resource)]
 struct CurrentPlayer {
     player: Mutex<mpsc::Receiver<Vec<u8>>>,
+}
+
+fn player_next_frame(
+    current_player_res: Res<CurrentPlayer>,
+) {
+    let player = current_player_res.player.lock().unwrap();
+
+    let frame_data = player.recv().unwrap();
+    println!("Frame data aquired!");
+    drop(frame_data);
 }
 
 fn create_player(path: &str) -> mpsc::Receiver<Vec<u8>> {
