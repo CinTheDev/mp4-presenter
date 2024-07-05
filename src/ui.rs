@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::tasks::AsyncComputeTaskPool;
+use bevy_framepace;
 use std::sync::{mpsc, Mutex};
 
 use crate::video_decoder::VideoDecoder;
@@ -18,9 +19,11 @@ struct Player {
 pub fn run() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(bevy_framepace::FramepacePlugin)
         .add_systems(Startup, (
             setup,
             maximize_window,
+            set_refresh_rate,
         ))
         .add_systems(Update, (
             player_next_frame,
@@ -82,6 +85,10 @@ fn setup(
 fn maximize_window(mut window_query: Query<&mut Window, With<bevy::window::PrimaryWindow>>) {
     let mut window = window_query.single_mut();
     window.mode = bevy::window::WindowMode::BorderlessFullscreen;
+}
+
+fn set_refresh_rate(mut framepace: ResMut<bevy_framepace::FramepaceSettings>) {
+    framepace.limiter = bevy_framepace::Limiter::from_framerate(60.0);
 }
 
 fn player_next_frame(
